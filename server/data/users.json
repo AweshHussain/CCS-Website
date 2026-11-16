@@ -1,0 +1,51 @@
+[
+  {
+    "id": "user-coordinator-1",
+    "email": "coordinator@ccs-society.org",
+    "passwordHash": "$2b$10$pIkMbTnVgm8/ZIzlviFIlOWbdYXXW3uoiPk71bmY.t5c6j/EXjXMm",
+    "vaultCipher": "5e48b5e72a645ba7bc96cae59aa01798:d692f903f8d2cd1937464e3e1c6ea61c",
+    "fullName": "Awesh Hussain",
+    "role": "coordinator",
+    "department": "Executive Leadership & Full-Stack Core",
+    "avatarUrl": "/assets/team/awesh.png",
+    "createdAt": "2026-11-15T15:45:50.035Z"
+  },
+  {
+    "id": "user-faculty-1",
+    "email": "faculty@ccs-society.org",
+    "passwordHash": "$2b$10$E7q2hZPyOQdyRKjL7qi16eSVrpAiNRCjsGydPzFp9hnGuiGjT/z4i",
+    "vaultCipher": "aec5dc771ee82507b7aaa69f6f6cb07a:0da0551b338395514d28183695d8c285fc711b7228befa6b00d5aafe9cfaacc1",
+    "fullName": "Dr. Rajesh Sharma",
+    "role": "faculty",
+    "department": "Department of Computer Science & Engineering",
+    "avatarUrl": "",
+    "createdAt": "2026-11-15T15:45:50.037Z"
+  },
+  {
+    "id": "user-student-1",
+    "email": "student@ccs-society.org",
+    "passwordHash": "$2b$10$zhsZd5Pl7vXO26S5esklKu3uwPOkkvgfsESc4ZTNKPdXmxWrHc.f.",
+    "vaultCipher": "07d826f95b270ec183dce98149cdbd1e:040195f794796480afc9d511da7d533b75b3d8dcd63aaf6df7bfe569130d1f7c",
+    "fullName": "Aarav Mehta",
+    "role": "student",
+    "department": "Artificial Intelligence & Data Science",
+    "avatarUrl": "",
+    "createdAt": "2026-11-15T15:45:50.037Z"
+  },
+  {
+    "id": "user-1794774090119-b4mj6k",
+    "createdAt": "2026-11-15T20:21:30.119Z",
+    "updatedAt": "2026-11-15T20:27:42.140Z",
+    "avatarUrl": "/uploads/avatars/avatar-1794774462119-110621052.png",
+    "email": "adeeb1@gmail.com",
+    "passwordHash": "$2b$10$.06QFfW9U.EvqXg1TyQkAukoVeb2crWuNZ.7APKvZE7b6KLGNyjGm",
+    "vaultCipher": "77b34afefabea8df59037013746552c4:988b1ff7eba97c3029b7e26d32d4a52f",
+    "fullName": "adeebrazi",
+    "role": "faculty",
+    "department": "CSE",
+    "permissions": {
+      "canAssignWork": false,
+      "canBroadcastAnnouncements": true
+    }
+  }
+]

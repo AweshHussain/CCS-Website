@@ -1,0 +1,482 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-sans: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+  
+  --bg-primary: #080808;
+  --bg-card: rgba(12, 13, 18, 0.94);
+  --bg-card-elevated: rgba(15, 16, 22, 0.98);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --border-glass-elevated: rgba(255, 255, 255, 0.12);
+  --text-main: #FFFFFF;
+  --text-muted: #A1A1AA;
+}
+
+html.light {
+  color-scheme: light;
+  --bg-primary: #FFFFFF;
+  --bg-card: rgba(255, 255, 255, 0.88);
+  --bg-card-elevated: #FFFFFF;
+  --border-glass: rgba(0, 0, 0, 0.08);
+  --border-glass-elevated: rgba(0, 0, 0, 0.12);
+  --text-main: #09090B;
+  --text-muted: #52525B;
+}
+
+/* Dynamic Font Presets */
+.font-preset-unbounded {
+  --font-display: 'Unbounded', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+}
+
+.font-preset-rajdhani {
+  --font-display: 'Rajdhani', sans-serif;
+  --font-sans: 'Space Grotesk', sans-serif;
+}
+
+.font-preset-syne {
+  --font-display: 'Syne', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+}
+
+.font-preset-syncopate {
+  --font-display: 'Syncopate', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+}
+
+.font-preset-space {
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-sans: 'Inter', sans-serif;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-sans, 'Plus Jakarta Sans', 'Space Grotesk', sans-serif);
+  overflow-x: hidden;
+  transition: background-color 1.5s ease, color 1.5s ease;
+}
+
+/* Anti-Asset Extraction & Image Drag Protection */
+img {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-select: none;
+}
+
+html.light,
+html.light body,
+html.light #root {
+  background-color: #FFFFFF !important;
+  color: #09090B !important;
+}
+
+html.dark,
+html.dark body,
+html.dark #root {
+  background-color: #080808 !important;
+  color: #FFFFFF !important;
+}
+
+.font-display {
+  font-family: var(--font-display, 'Unbounded', 'Syne', sans-serif) !important;
+}
+
+.font-sans {
+  font-family: var(--font-sans, 'Plus Jakarta Sans', 'Space Grotesk', sans-serif) !important;
+}
+
+/* View Transitions Circular Quantum Portal Wipe */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+@keyframes quantumShockwave {
+  0% {
+    width: 0px;
+    height: 0px;
+    opacity: 1;
+    border-width: 4px;
+  }
+  25% {
+    opacity: 0.95;
+  }
+  60% {
+    opacity: 0.7;
+  }
+  100% {
+    width: 320vmax;
+    height: 320vmax;
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+
+/* Light Theme Overrides */
+html.light .text-white {
+  color: #09090B !important;
+}
+html.light .text-zinc-200,
+html.light .text-zinc-300 {
+  color: #27272A !important;
+}
+html.light .text-zinc-400 {
+  color: #52525B !important;
+}
+html.light .text-zinc-500 {
+  color: #71717A !important;
+}
+html.light .border-white\/10,
+html.light .border-white\/5,
+html.light .border-white\/15 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+html.light .bg-white\/5,
+html.light .bg-white\/\[0\.04\],
+html.light .bg-white\/\[0\.02\] {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+html.light .glass-panel {
+  background: var(--bg-card);
+  border-color: var(--border-glass);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+html.light .glass-panel:hover {
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(229, 9, 32, 0.3) !important;
+}
+html.light .glass-panel-elevated {
+  background: var(--bg-card-elevated);
+  border-color: var(--border-glass-elevated);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.06);
+}
+html.light .glass-panel-elevated:hover {
+  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(229, 9, 32, 0.3) !important;
+}
+
+/* Light mode: prevent ambient crimson neon blobs from creating pink blur stains on white cards */
+html.light .glass-panel [class*="blur-"],
+html.light .glass-panel-elevated [class*="blur-"],
+html.light .group:hover [class*="bg-[#E50920]"][class*="blur-"] {
+  display: none !important;
+}
+html.light footer {
+  background-color: #FAFAFC !important;
+  border-top-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Light mode form inputs & dropdowns */
+html.light input,
+html.light textarea,
+html.light select {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: #09090B !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+html.light select option {
+  background-color: #FFFFFF !important;
+  color: #09090B !important;
+}
+
+/* Intro Animation Cinematic Screen: Always luminous white & glowing text */
+[data-intro-screen],
+[data-intro-screen] *,
+html.light [data-intro-screen],
+html.light [data-intro-screen] * {
+  color: inherit;
+}
+
+[data-intro-screen] .text-white,
+html.light [data-intro-screen] .text-white {
+  color: #FFFFFF !important;
+}
+
+[data-intro-screen] .text-zinc-300,
+[data-intro-screen] .text-zinc-400,
+html.light [data-intro-screen] .text-zinc-300,
+html.light [data-intro-screen] .text-zinc-400 {
+  color: #E4E4E7 !important;
+}
+
+[data-intro-screen] .text-zinc-500,
+html.light [data-intro-screen] .text-zinc-500 {
+  color: #A1A1AA !important;
+}
+
+[data-intro-screen] p[class*="text-[#E50920]"],
+html.light [data-intro-screen] p[class*="text-[#E50920]"] {
+  color: #E50920 !important;
+}
+
+/* Elements on crimson/red buttons and pills retain pure white text */
+html.light button.bg-gradient-to-r,
+html.light button.bg-gradient-to-r *,
+html.light a.bg-gradient-to-r,
+html.light a.bg-gradient-to-r *,
+html.light .bg-crimson,
+html.light .bg-crimson *,
+html.light .group:hover .group-hover\:text-white,
+html.light .group:hover [class*="group-hover:bg-[#E50920]"],
+html.light .group:hover [class*="group-hover:bg-[#E50920]"] * {
+  color: #FFFFFF !important;
+}
+
+html.light .group:hover [class*="group-hover:bg-[#E50920]"] {
+  background-color: #E50920 !important;
+  border-color: #E50920 !important;
+}
+
+/* Gallery Cards & Lightbox Modal keep cinematic contrast on dark image overlays */
+html.light [data-gallery-card],
+html.light [data-gallery-card] *,
+html.light [data-gallery-overlay],
+html.light [data-gallery-overlay] *,
+html.light .lightbox-modal,
+html.light .lightbox-modal * {
+  color: inherit;
+}
+
+html.light [data-gallery-card] .text-white,
+html.light [data-gallery-overlay] .text-white,
+html.light .lightbox-modal .text-white {
+  color: #FFFFFF !important;
+}
+
+html.light [data-gallery-card] .text-zinc-200,
+html.light [data-gallery-card] .text-zinc-300,
+html.light [data-gallery-overlay] .text-zinc-300,
+html.light .lightbox-modal .text-zinc-300 {
+  color: #E4E4E7 !important;
+}
+
+html.light [data-gallery-card] .text-zinc-400,
+html.light [data-gallery-overlay] .text-zinc-400,
+html.light .lightbox-modal .text-zinc-400 {
+  color: #A1A1AA !important;
+}
+
+/* Floating Navbar Capsule - 100% Opaque Solid Midnight Obsidian (blocks all underlying text) */
+.navbar-capsule {
+  background-color: #0B0C10 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.85) !important;
+}
+
+html.light .navbar-capsule {
+  background-color: #0B0C10 !important;
+  border: 1px solid rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.22) !important;
+}
+
+/* Floating Navbar in Light Mode maintains sleek dark obsidian contrast */
+html.light header .text-white {
+  color: #FFFFFF !important;
+}
+html.light header .text-zinc-200,
+html.light header .text-zinc-300 {
+  color: #D4D4D8 !important;
+}
+html.light header .text-zinc-400 {
+  color: #A1A1AA !important;
+}
+html.light header .glass-panel {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #FFFFFF !important;
+}
+
+::view-transition-group(main-navbar) {
+  z-index: 99999;
+}
+
+/* Custom sleek scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333338;
+  border-radius: 4px;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #E50920;
+}
+
+/* Glassmorphism utility classes */
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+}
+
+.glass-panel-elevated {
+  background: var(--bg-card-elevated);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-glass-elevated);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+.glass-panel-crimson {
+  background: linear-gradient(135deg, rgba(229, 9, 32, 0.08) 0%, rgba(18, 18, 20, 0.7) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(229, 9, 32, 0.25);
+}
+
+/* Subtle Crimson Ambient Lighting */
+.ambient-glow-red {
+  background: radial-gradient(circle at 50% 50%, rgba(229, 9, 32, 0.15) 0%, rgba(229, 9, 32, 0.0) 70%);
+}
+
+.ambient-spotlight {
+  background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(229, 9, 32, 0.06), transparent 40%);
+}
+
+/* Text Shimmer Effect */
+@keyframes textShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.text-gradient-shimmer {
+  background: linear-gradient(90deg, #FFFFFF 0%, #E50920 50%, #FFFFFF 100%);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: textShimmer 8s linear infinite;
+}
+
+html.light .text-gradient-shimmer {
+  background: linear-gradient(90deg, #09090B 0%, #E50920 50%, #09090B 100%);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* View Transition Stabilization Rules */
+::view-transition-old(root) {
+  animation: none !important;
+  mix-blend-mode: normal !important;
+}
+
+::view-transition-new(root) {
+  animation: none !important;
+  mix-blend-mode: normal !important;
+}
+
+::view-transition-group(main-navbar) {
+  z-index: 99999;
+}
+
+/* Claymorphism & Tactile 3D Soft-UI Styles */
+.clay-card {
+  border-radius: 36px;
+  background: rgba(18, 19, 26, 0.78);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow: 
+    0 30px 65px -12px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.28),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.45);
+}
+
+html.light .clay-card {
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 
+    0 30px 60px -12px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.95),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.04);
+}
+
+/* Debossed / Inset Input Wells */
+.clay-input-well {
+  background: rgba(8, 9, 14, 0.6);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    inset 2px 3px 6px rgba(0, 0, 0, 0.6),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.04),
+    0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+html.light .clay-input-well {
+  background: #F0F3F8;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 
+    inset 2px 3px 6px rgba(0, 0, 0, 0.07),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.95),
+    0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+/* 3D Clay Icon Chips */
+.clay-chip {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.02) 100%);
+  box-shadow: 
+    3px 3px 8px rgba(0, 0, 0, 0.35),
+    -2px -2px 5px rgba(255, 255, 255, 0.06),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.35);
+}
+
+html.light .clay-chip {
+  background: linear-gradient(145deg, #FFFFFF 0%, #E6EDF5 100%);
+  box-shadow: 
+    3px 3px 6px rgba(0, 0, 0, 0.07),
+    -2px -2px 5px rgba(255, 255, 255, 0.9),
+    inset 0 1px 1px rgba(255, 255, 255, 1);
+}
+
+/* Tactile Clay 3D Push Button */
+.clay-btn-crimson {
+  background: linear-gradient(180deg, #FF1E38 0%, #E50920 45%, #B20718 100%);
+  border-radius: 20px;
+  box-shadow: 
+    0 14px 28px rgba(229, 9, 32, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 2px 2px rgba(255, 255, 255, 0.45),
+    inset 0 -3px 3px rgba(0, 0, 0, 0.35);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.clay-btn-crimson:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 18px 36px rgba(229, 9, 32, 0.55),
+    0 6px 12px rgba(0, 0, 0, 0.35),
+    inset 0 2px 2px rgba(255, 255, 255, 0.55),
+    inset 0 -3px 3px rgba(0, 0, 0, 0.35);
+}
+
+.clay-btn-crimson:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 
+    0 6px 14px rgba(229, 9, 32, 0.4),
+    inset 0 3px 6px rgba(0, 0, 0, 0.4);
+}

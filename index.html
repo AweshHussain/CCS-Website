@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/ccs-logo.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CCS — Code & Compute Society | Think. Code. Create.</title>
+    <meta name="description" content="Official website of Code & Compute Society (CCS) — A premier technical community dedicated to software craftsmanship, algorithmic innovation, and creative technology." />
+    
+    <!-- Google Fonts: Futuristic & Technical Typography Suite -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Syncopate:wght@400;700&family=Syne:wght@500;700;800;900&family=Unbounded:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Anti-Inspection & Right-Click Security Guard -->
+    <script>
+      (function() {
+        document.addEventListener('contextmenu', function(e) {
+          e.preventDefault();
+        }, false);
+        document.addEventListener('keydown', function(e) {
+          if (
+            e.key === 'F12' ||
+            e.keyCode === 123 ||
+            ((e.ctrlKey || e.metaKey) && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) ||
+            ((e.ctrlKey || e.metaKey) && ['u', 'U', 's', 'S'].includes(e.key))
+          ) {
+            e.preventDefault();
+            return false;
+          }
+        }, false);
+      })();
+    </script>
+  </head>
+  <body class="selection:bg-[#E50920] selection:text-white antialiased overflow-x-hidden min-h-screen">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

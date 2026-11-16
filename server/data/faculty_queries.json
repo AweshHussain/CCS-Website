@@ -1,0 +1,42 @@
+[
+  {
+    "id": "query-1",
+    "facultyName": "Dr. Rajesh Sharma",
+    "facultyEmail": "rajesh.sharma@institution.edu",
+    "department": "Department of Computer Science & Engineering",
+    "subject": "Approval of Hardware Lab Access for Hackathon 2026",
+    "message": "The departmental council has reviewed the student coordinator proposal for 48-hour continuous lab access for the upcoming hackathon. Please submit the safety warden list and power distribution map by Wednesday so we can authorize laboratory access keys.",
+    "priority": "urgent",
+    "category": "Event Permission",
+    "status": "open",
+    "coordinatorResponse": "",
+    "createdAt": "2026-11-15T17:19:39.681Z"
+  },
+  {
+    "id": "query-2",
+    "facultyName": "Dr. Anita Deshmukh",
+    "facultyEmail": "anita.deshmukh@institution.edu",
+    "department": "Department of AI & Data Science",
+    "subject": "National Research Symposium Paper Nominations",
+    "message": "We have received 4 grant invitations for student-led computing papers. Please compile the abstracts from the AI wing and submit the author list by Friday afternoon for advisory council endorsement.",
+    "priority": "advisory",
+    "category": "Funding & Grants",
+    "status": "in_review",
+    "coordinatorResponse": "AI wing leads have gathered 3 paper drafts. Compiling final PDF for council submission.",
+    "createdAt": "2026-11-15T00:19:39.681Z"
+  },
+  {
+    "id": "query-3",
+    "facultyName": "Dr. Vikram Patel",
+    "facultyEmail": "vikram.patel@institution.edu",
+    "department": "Office of Student Dean",
+    "subject": "Guest Speaker Confirmation: Distributed Backends Masterclass",
+    "message": "Dr. Sandeep from Google Cloud has confirmed his masterclass on distributed computing for Saturday 11:00 AM. Please coordinate the auditorium audiovisual setup and send meeting links.",
+    "priority": "normal",
+    "category": "Curriculum Advisory",
+    "status": "resolved",
+    "coordinatorResponse": "Auditorium AV confirmed with campus media cell. Student registration broadcast live.",
+    "createdAt": "2026-11-12T20:19:39.681Z",
+    "resolvedAt": "2026-11-15T08:19:39.681Z"
+  }
+]

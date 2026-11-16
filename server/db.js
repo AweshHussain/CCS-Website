@@ -1,0 +1,867 @@
+import mongoose from 'mongoose';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+import { encryptPassword } from './utils/crypto.js';
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const DATA_DIR = path.join(__dirname, 'data');
+const DB_USERS_FILE = path.join(DATA_DIR, 'users.json');
+const DB_UPDATES_FILE = path.join(DATA_DIR, 'student_updates.json');
+const DB_QUERIES_FILE = path.join(DATA_DIR, 'faculty_queries.json');
+const DB_SETTINGS_FILE = path.join(DATA_DIR, 'portal_settings.json');
+const DB_ANNOUNCEMENTS_FILE = path.join(DATA_DIR, 'announcements.json');
+const DB_ASSIGNED_WORK_FILE = path.join(DATA_DIR, 'assigned_work.json');
+
+// Ensure local data directory exists for offline fallback
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+// -------------------------------------------------------------
+// 1. User Schema for MongoDB Atlas
+// -------------------------------------------------------------
+const userSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true, unique: true, index: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    passwordHash: { type: String, required: true },
+    vaultCipher: { type: String },
+    fullName: { type: String, required: true },
+    role: { type: String, enum: ['coordinator', 'faculty', 'student'], default: 'student' },
+    department: { type: String, default: 'General Engineering' },
+    avatarUrl: { type: String, default: '' },
+    permissions: {
+      type: Object,
+      default: () => ({
+        canBroadcastAnnouncements: false,
+        canReviewProjects: false,
+        canAssignWork: false,
+        canManageAccounts: false,
+      }),
+    },
+    createdAt: { type: String, default: () => new Date().toISOString() },
+    updatedAt: { type: String, default: () => new Date().toISOString() },
+  },
+  { collection: 'ccs_users' }
+);
+
+export const UserModel = mongoose.models.User || mongoose.model('User', userSchema);
+
+// -------------------------------------------------------------
+// 2. Student Work & Project Updates Schema
+// -------------------------------------------------------------
+const studentUpdateSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true, unique: true, index: true },
+    studentName: { type: String, required: true },
+    studentEmail: { type: String, required: true },
+    department: { type: String, default: 'Computer Science & Engineering' },
+    projectTitle: { type: String, required: true },
+    description: { type: String, required: true },
+    domain: { type: String, default: 'Full-Stack Systems' },
+    githubUrl: { type: String, default: '' },
+    demoUrl: { type: String, default: '' },
+    progressPercent: { type: Number, default: 0 },
+    status: { type: String, enum: ['pending', 'approved', 'changes_requested'], default: 'pending' },
+    coordinatorFeedback: { type: String, default: '' },
+    submittedAt: { type: String, default: () => new Date().toISOString() },
+    updatedAt: { type: String, default: () => new Date().toISOString() },
+  },
+  { collection: 'ccs_student_updates' }
+);
+
+export const StudentUpdateModel = mongoose.models.StudentUpdate || mongoose.model('StudentUpdate', studentUpdateSchema);
+
+// -------------------------------------------------------------
+// 3. Faculty Queries & Advisory Directives Schema
+// -------------------------------------------------------------
+const facultyQuerySchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true, unique: true, index: true },
+    facultyName: { type: String, required: true },
+    facultyEmail: { type: String, required: true },
+    department: { type: String, default: 'Department of Computer Science & Engineering' },
+    subject: { type: String, required: true },
+    message: { type: String, required: true },
+    priority: { type: String, enum: ['urgent', 'advisory', 'normal'], default: 'normal' },
+    category: { type: String, default: 'Event Permission' },
+    status: { type: String, enum: ['open', 'in_review', 'resolved'], default: 'open' },
+    coordinatorResponse: { type: String, default: '' },
+    createdAt: { type: String, default: () => new Date().toISOString() },
+    resolvedAt: { type: String },
+  },
+  { collection: 'ccs_faculty_queries' }
+);
+
+export const FacultyQueryModel = mongoose.models.FacultyQuery || mongoose.model('FacultyQuery', facultyQuerySchema);
+
+// -------------------------------------------------------------
+// 4. Portal Settings & Preferences Schema
+// -------------------------------------------------------------
+const portalSettingsSchema = new mongoose.Schema(
+  {
+    id: { type: String, default: 'main_settings', unique: true },
+    societyName: { type: String, default: 'Code & Compute Society (CCS)' },
+    announcementBanner: { type: String, default: '🚀 Hackathon Season 2026 Submissions are now officially open!' },
+    isBannerActive: { type: Boolean, default: true },
+    submissionSeasonOpen: { type: Boolean, default: true },
+    allowedRegistrationDomain: { type: String, default: 'All Domains' },
+    notifyOnStudentSubmission: { type: Boolean, default: true },
+    notifyOnFacultyQuery: { type: Boolean, default: true },
+    updatedAt: { type: String, default: () => new Date().toISOString() },
+  },
+  { collection: 'ccs_portal_settings' }
+);
+
+export const PortalSettingsModel = mongoose.models.PortalSettings || mongoose.model('PortalSettings', portalSettingsSchema);
+
+// -------------------------------------------------------------
+// 5. Announcements Schema for MongoDB Atlas
+// -------------------------------------------------------------
+const announcementSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true, unique: true, index: true },
+    message: { type: String, required: true },
+    authorName: { type: String, default: 'Student Coordinator' },
+    createdAt: { type: String, default: () => new Date().toISOString() },
+  },
+  { collection: 'ccs_announcements' }
+);
+
+export const AnnouncementModel = mongoose.models.Announcement || mongoose.model('Announcement', announcementSchema);
+
+// -------------------------------------------------------------
+// 6. Assigned Work Schema for MongoDB Atlas (Faculty assigns work to Students)
+// -------------------------------------------------------------
+const assignedWorkSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true, unique: true, index: true },
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    domain: { type: String, default: 'General Systems' },
+    assignedByName: { type: String, required: true },
+    assignedByEmail: { type: String, required: true },
+    assignedTo: { type: String, default: 'All Students' },
+    dueDate: { type: String, default: '' },
+    priority: { type: String, enum: ['normal', 'high', 'urgent'], default: 'normal' },
+    status: { type: String, enum: ['active', 'completed', 'archived'], default: 'active' },
+    createdAt: { type: String, default: () => new Date().toISOString() },
+  },
+  { collection: 'ccs_assigned_work' }
+);
+
+export const AssignedWorkModel = mongoose.models.AssignedWork || mongoose.model('AssignedWork', assignedWorkSchema);
+
+// -------------------------------------------------------------
+// Seed Data
+// -------------------------------------------------------------
+export const SEED_USERS = [
+  {
+    id: 'user-coordinator-1',
+    email: 'coordinator@ccs-society.org',
+    passwordHash: '$2b$10$pIkMbTnVgm8/ZIzlviFIlOWbdYXXW3uoiPk71bmY.t5c6j/EXjXMm',
+    vaultCipher: encryptPassword('Admin@CCS2026!'),
+    fullName: 'Awesh Hussain',
+    role: 'coordinator',
+    department: 'Executive Leadership & Full-Stack Core',
+    avatarUrl: '/assets/team/awesh.png',
+    createdAt: '2026-11-15T06:30:10.260Z',
+  },
+  {
+    id: 'user-faculty-1',
+    email: 'faculty@ccs-society.org',
+    passwordHash: '$2b$10$E7q2hZPyOQdyRKjL7qi16eSVrpAiNRCjsGydPzFp9hnGuiGjT/z4i',
+    vaultCipher: encryptPassword('Faculty@CCS2026!'),
+    fullName: 'Dr. Rajesh Sharma',
+    role: 'faculty',
+    department: 'Department of Computer Science & Engineering',
+    avatarUrl: '',
+    createdAt: '2026-11-15T06:30:10.263Z',
+  },
+  {
+    id: 'user-student-1',
+    email: 'student@ccs-society.org',
+    passwordHash: '$2b$10$zhsZd5Pl7vXO26S5esklKu3uwPOkkvgfsESc4ZTNKPdXmxWrHc.f.',
+    vaultCipher: encryptPassword('Student@CCS2026!'),
+    fullName: 'Aarav Mehta',
+    role: 'student',
+    department: 'Artificial Intelligence & Data Science',
+    avatarUrl: '',
+    createdAt: '2026-11-15T06:30:10.263Z',
+  },
+];
+
+export const SEED_STUDENT_UPDATES = [
+  {
+    id: 'update-1',
+    studentName: 'Aarav Mehta',
+    studentEmail: 'aarav.mehta@ccs-society.org',
+    department: 'Artificial Intelligence & Data Science',
+    projectTitle: 'NeuroMesh — Distributed Vector Indexing Engine',
+    description: 'Designed an HNSW-based vector indexing microservice capable of performing k-NN search across 500k vectors in under 4ms for our internal society knowledge base.',
+    domain: 'AI/ML Systems',
+    githubUrl: 'https://github.com/ccs-society/neuromesh',
+    demoUrl: 'https://neuromesh.ccs-society.org',
+    progressPercent: 85,
+    status: 'pending',
+    coordinatorFeedback: '',
+    submittedAt: new Date(Date.now() - 3600000 * 4).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'update-2',
+    studentName: 'Riya Sen',
+    studentEmail: 'riya.sen@institution.edu',
+    department: 'Computer Science & Engineering',
+    projectTitle: 'QuantumKey — Post-Quantum TLS Handshake Proxy',
+    description: 'Implemented ML-KEM (Kyber-768) lattice-based key exchange over HTTP/2 proxy to secure internal telemetry between campus microservices.',
+    domain: 'Cybersecurity & Crypto',
+    githubUrl: 'https://github.com/ccs-society/quantum-key',
+    demoUrl: 'https://quantumkey.ccs-society.org',
+    progressPercent: 100,
+    status: 'approved',
+    coordinatorFeedback: 'Approved for deployment on campus staging cluster.',
+    submittedAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'update-3',
+    studentName: 'Tanmay Verma',
+    studentEmail: 'tanmay.v@institution.edu',
+    department: 'Information Technology',
+    projectTitle: 'AetherPulse — Real-Time IoT Telemetry Mesh',
+    description: 'MQTT broker integrated with WebSockets delivering sensor telemetry from campus IoT boards with sub-10ms latency.',
+    domain: 'Cloud & Distributed Systems',
+    githubUrl: 'https://github.com/ccs-society/aether-pulse',
+    demoUrl: 'https://aetherpulse.ccs-society.org',
+    progressPercent: 60,
+    status: 'changes_requested',
+    coordinatorFeedback: 'Please add automated integration tests for broker reconnection edge cases before merge.',
+    submittedAt: new Date(Date.now() - 3600000 * 48).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'update-4',
+    studentName: 'Md. Arsalan',
+    studentEmail: 'arsalan01@gmail.com',
+    department: 'Software Engineering',
+    projectTitle: 'CCS Canvas — Interactive 3D Architecture Visualizer',
+    description: 'Three.js WebGL canvas tool to map out system diagrams and distributed data pipelines with draggable obsidian nodes.',
+    domain: 'Full-Stack & 3D Web',
+    githubUrl: 'https://github.com/ccs-society/ccs-canvas',
+    demoUrl: 'https://canvas.ccs-society.org',
+    progressPercent: 75,
+    status: 'pending',
+    coordinatorFeedback: '',
+    submittedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
+
+export const SEED_FACULTY_QUERIES = [
+  {
+    id: 'query-1',
+    facultyName: 'Dr. Rajesh Sharma',
+    facultyEmail: 'rajesh.sharma@institution.edu',
+    department: 'Department of Computer Science & Engineering',
+    subject: 'Approval of Hardware Lab Access for Hackathon 2026',
+    message: 'The departmental council has reviewed the student coordinator proposal for 48-hour continuous lab access for the upcoming hackathon. Please submit the safety warden list and power distribution map by Wednesday so we can authorize laboratory access keys.',
+    priority: 'urgent',
+    category: 'Event Permission',
+    status: 'open',
+    coordinatorResponse: '',
+    createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+  },
+  {
+    id: 'query-2',
+    facultyName: 'Dr. Anita Deshmukh',
+    facultyEmail: 'anita.deshmukh@institution.edu',
+    department: 'Department of AI & Data Science',
+    subject: 'National Research Symposium Paper Nominations',
+    message: 'We have received 4 grant invitations for student-led computing papers. Please compile the abstracts from the AI wing and submit the author list by Friday afternoon for advisory council endorsement.',
+    priority: 'advisory',
+    category: 'Funding & Grants',
+    status: 'in_review',
+    coordinatorResponse: 'AI wing leads have gathered 3 paper drafts. Compiling final PDF for council submission.',
+    createdAt: new Date(Date.now() - 3600000 * 20).toISOString(),
+  },
+  {
+    id: 'query-3',
+    facultyName: 'Dr. Vikram Patel',
+    facultyEmail: 'vikram.patel@institution.edu',
+    department: 'Office of Student Dean',
+    subject: 'Guest Speaker Confirmation: Distributed Backends Masterclass',
+    message: 'Dr. Sandeep from Google Cloud has confirmed his masterclass on distributed computing for Saturday 11:00 AM. Please coordinate the auditorium audiovisual setup and send meeting links.',
+    priority: 'normal',
+    category: 'Curriculum Advisory',
+    status: 'resolved',
+    coordinatorResponse: 'Auditorium AV confirmed with campus media cell. Student registration broadcast live.',
+    createdAt: new Date(Date.now() - 3600000 * 72).toISOString(),
+    resolvedAt: new Date(Date.now() - 3600000 * 12).toISOString(),
+  },
+];
+
+export const DEFAULT_SETTINGS = {
+  id: 'main_settings',
+  societyName: 'Code & Compute Society (CCS)',
+  announcementBanner: '🚀 Hackathon Season 2026 Submissions are now officially open!',
+  isBannerActive: true,
+  submissionSeasonOpen: true,
+  allowedRegistrationDomain: 'All Domains',
+  notifyOnStudentSubmission: true,
+  notifyOnFacultyQuery: true,
+  updatedAt: new Date().toISOString(),
+};
+
+export const SEED_ANNOUNCEMENTS = [
+  {
+    id: 'ann-seed-1',
+    message: 'Registrations closing tonight at 11:59 PM!',
+    authorName: 'Awesh Hussain (Student Coordinator)',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'ann-seed-2',
+    message: '🚀 Hackathon Season 2026 Submissions are now officially open!',
+    authorName: 'Awesh Hussain (Student Coordinator)',
+    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+  },
+];
+
+export const SEED_ASSIGNED_WORK = [
+  {
+    id: 'work-seed-1',
+    title: 'Implement Multi-Agent LLM Orchestration with RAG',
+    description: 'Design and benchmark a distributed retrieval-augmented pipeline using LangChain/LlamaIndex. Submit demo link and GitHub repository with latency and accuracy benchmarks.',
+    domain: 'Artificial Intelligence & Systems',
+    assignedByName: 'Dr. Rajesh Sharma',
+    assignedByEmail: 'faculty@ccs-society.org',
+    assignedTo: 'All Students',
+    dueDate: '2026-11-30',
+    priority: 'high',
+    status: 'active',
+    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+  },
+  {
+    id: 'work-seed-2',
+    title: 'Distributed WebSocket State Synchronizer',
+    description: 'Develop a high-throughput WebSocket broadcast system with Redis pub/sub backplane to handle concurrent student terminal updates.',
+    domain: 'Cloud Infrastructure & Networks',
+    assignedByName: 'Dr. Rajesh Sharma',
+    assignedByEmail: 'faculty@ccs-society.org',
+    assignedTo: 'All Students',
+    dueDate: '2026-12-05',
+    priority: 'normal',
+    status: 'active',
+    createdAt: new Date(Date.now() - 3600000 * 48).toISOString(),
+  },
+];
+
+let isMongoConnected = false;
+
+// -------------------------------------------------------------
+// Local JSON File Helpers
+// -------------------------------------------------------------
+function readJson(file, defaultData) {
+  try {
+    if (!fs.existsSync(file)) {
+      fs.writeFileSync(file, JSON.stringify(defaultData, null, 2), 'utf-8');
+      return defaultData;
+    }
+    const data = fs.readFileSync(file, 'utf-8');
+    return JSON.parse(data);
+  } catch {
+    return defaultData;
+  }
+}
+
+function writeJson(file, data) {
+  try {
+    fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    console.error(`Error writing ${file}:`, err.message);
+  }
+}
+
+/**
+ * Connect to MongoDB Atlas (CCS-Cluster) with automatic seeding & fallback
+ */
+export async function connectDB() {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    console.log('⚠️ [Database] MONGODB_URI not found. Using local JSON store.');
+    return false;
+  }
+
+  try {
+    const maskedUri = uri.replace(/:([^:@]+)@/, ':****@');
+    console.log(`📡 [Database] Connecting to MongoDB Atlas: ${maskedUri}`);
+
+    await mongoose.connect(uri, { serverSelectionTimeoutMS: 8000 });
+    isMongoConnected = true;
+    console.log('🟢 [Database] Connected successfully to MongoDB Atlas (CCS-Cluster)!');
+
+    // 1. Seed Users
+    const userCount = await UserModel.countDocuments();
+    if (userCount === 0) {
+      console.log('📦 [Database] Seeding initial accounts into MongoDB Atlas ccs_users...');
+      const localUsers = readJson(DB_USERS_FILE, SEED_USERS);
+      await UserModel.insertMany(localUsers.length > 0 ? localUsers : SEED_USERS);
+    }
+
+    // 2. Seed Student Updates
+    const updateCount = await StudentUpdateModel.countDocuments();
+    if (updateCount === 0) {
+      console.log('📦 [Database] Seeding student project updates into MongoDB Atlas...');
+      await StudentUpdateModel.insertMany(SEED_STUDENT_UPDATES);
+    }
+
+    // 3. Seed Faculty Queries
+    const queryCount = await FacultyQueryModel.countDocuments();
+    if (queryCount === 0) {
+      console.log('📦 [Database] Seeding faculty queries into MongoDB Atlas...');
+      await FacultyQueryModel.insertMany(SEED_FACULTY_QUERIES);
+    }
+
+    // 4. Seed Portal Settings
+    const settingsDoc = await PortalSettingsModel.findOne({ id: 'main_settings' });
+    if (!settingsDoc) {
+      await PortalSettingsModel.create(DEFAULT_SETTINGS);
+    }
+
+    // 5. Seed Announcements
+    const announcementCount = await AnnouncementModel.countDocuments();
+    if (announcementCount === 0) {
+      console.log('📦 [Database] Seeding announcements into MongoDB Atlas...');
+      await AnnouncementModel.insertMany(SEED_ANNOUNCEMENTS);
+    }
+
+    // 6. Seed Assigned Work
+    const assignedWorkCount = await AssignedWorkModel.countDocuments();
+    if (assignedWorkCount === 0) {
+      console.log('📦 [Database] Seeding assigned work tasks into MongoDB Atlas...');
+      await AssignedWorkModel.insertMany(SEED_ASSIGNED_WORK);
+    }
+
+    console.log('✅ [Database] All cloud collections initialized and synchronized.');
+    return true;
+  } catch (err) {
+    console.error('❌ [Database] MongoDB Atlas connection error:', err.message);
+    console.log('⚠️ [Database] Falling back to persistent local storage.');
+    isMongoConnected = false;
+    return false;
+  }
+}
+
+// -------------------------------------------------------------
+// Unified Database Access Object
+// -------------------------------------------------------------
+export const db = {
+  isCloudConnected: () => isMongoConnected,
+
+  // --- Users ---
+  getUsers: async () => {
+    if (isMongoConnected) {
+      try {
+        return await UserModel.find({}).lean();
+      } catch (err) {
+        console.error('Mongo getUsers error, using local fallback:', err.message);
+      }
+    }
+    return readJson(DB_USERS_FILE, SEED_USERS);
+  },
+
+  findUserByEmail: async (email) => {
+    if (!email) return null;
+    const cleanEmail = email.toLowerCase().trim();
+    if (isMongoConnected) {
+      try {
+        return await UserModel.findOne({ email: cleanEmail }).lean();
+      } catch (err) {
+        console.error('Mongo findUserByEmail error:', err.message);
+      }
+    }
+    const local = readJson(DB_USERS_FILE, SEED_USERS);
+    return local.find((u) => u.email.toLowerCase() === cleanEmail);
+  },
+
+  findUserById: async (id) => {
+    if (!id) return null;
+    if (isMongoConnected) {
+      try {
+        return await UserModel.findOne({ id }).lean();
+      } catch (err) {
+        console.error('Mongo findUserById error:', err.message);
+      }
+    }
+    const local = readJson(DB_USERS_FILE, SEED_USERS);
+    return local.find((u) => u.id === id);
+  },
+
+  createUser: async (userData) => {
+    const newUser = {
+      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      avatarUrl: '',
+      ...userData,
+    };
+
+    if (isMongoConnected) {
+      try {
+        const created = await UserModel.create(newUser);
+        return created.toObject();
+      } catch (err) {
+        console.error('Mongo createUser error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_USERS_FILE, SEED_USERS);
+    local.push(newUser);
+    writeJson(DB_USERS_FILE, local);
+    return newUser;
+  },
+
+  updateUser: async (id, updates) => {
+    if (isMongoConnected) {
+      try {
+        const updated = await UserModel.findOneAndUpdate(
+          { id },
+          { ...updates, updatedAt: new Date().toISOString() },
+          { new: true }
+        ).lean();
+        if (updated) return updated;
+      } catch (err) {
+        console.error('Mongo updateUser error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_USERS_FILE, SEED_USERS);
+    const idx = local.findIndex((u) => u.id === id);
+    if (idx === -1) return null;
+    local[idx] = { ...local[idx], ...updates, updatedAt: new Date().toISOString() };
+    writeJson(DB_USERS_FILE, local);
+    return local[idx];
+  },
+
+  deleteUser: async (id) => {
+    if (isMongoConnected) {
+      try {
+        const res = await UserModel.deleteOne({ id });
+        if (res.deletedCount > 0) return true;
+      } catch (err) {
+        console.error('Mongo deleteUser error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_USERS_FILE, SEED_USERS);
+    const filtered = local.filter((u) => u.id !== id);
+    if (filtered.length === local.length) return false;
+    writeJson(DB_USERS_FILE, filtered);
+    return true;
+  },
+
+  // --- Student Work Updates ---
+  getStudentUpdates: async () => {
+    if (isMongoConnected) {
+      try {
+        return await StudentUpdateModel.find({}).sort({ submittedAt: -1 }).lean();
+      } catch (err) {
+        console.error('Mongo getStudentUpdates error:', err.message);
+      }
+    }
+    return readJson(DB_UPDATES_FILE, SEED_STUDENT_UPDATES);
+  },
+
+  updateStudentSubmissionStatus: async (id, status, coordinatorFeedback = '') => {
+    if (isMongoConnected) {
+      try {
+        const updated = await StudentUpdateModel.findOneAndUpdate(
+          { id },
+          { status, coordinatorFeedback, updatedAt: new Date().toISOString() },
+          { new: true }
+        ).lean();
+        if (updated) return updated;
+      } catch (err) {
+        console.error('Mongo updateStudentSubmissionStatus error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_UPDATES_FILE, SEED_STUDENT_UPDATES);
+    const idx = local.findIndex((s) => s.id === id);
+    if (idx === -1) return null;
+    local[idx].status = status;
+    local[idx].coordinatorFeedback = coordinatorFeedback;
+    local[idx].updatedAt = new Date().toISOString();
+    writeJson(DB_UPDATES_FILE, local);
+    return local[idx];
+  },
+
+  updateStudentSubmission: async (id, updates) => {
+    if (isMongoConnected) {
+      try {
+        const updated = await StudentUpdateModel.findOneAndUpdate(
+          { id },
+          { ...updates, updatedAt: new Date().toISOString() },
+          { new: true }
+        ).lean();
+        if (updated) return updated;
+      } catch (err) {
+        console.error('Mongo updateStudentSubmission error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_UPDATES_FILE, SEED_STUDENT_UPDATES);
+    const idx = local.findIndex((s) => s.id === id);
+    if (idx === -1) return null;
+    local[idx] = { ...local[idx], ...updates, updatedAt: new Date().toISOString() };
+    writeJson(DB_UPDATES_FILE, local);
+    return local[idx];
+  },
+
+  createStudentUpdate: async (data) => {
+    const newUpdate = {
+      id: `update-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      submittedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      status: 'pending',
+      coordinatorFeedback: '',
+      ...data,
+    };
+
+    if (isMongoConnected) {
+      try {
+        const created = await StudentUpdateModel.create(newUpdate);
+        return created.toObject();
+      } catch (err) {
+        console.error('Mongo createStudentUpdate error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_UPDATES_FILE, SEED_STUDENT_UPDATES);
+    local.unshift(newUpdate);
+    writeJson(DB_UPDATES_FILE, local);
+    return newUpdate;
+  },
+
+  // --- Faculty Queries & Directives ---
+  getFacultyQueries: async () => {
+    if (isMongoConnected) {
+      try {
+        return await FacultyQueryModel.find({}).sort({ createdAt: -1 }).lean();
+      } catch (err) {
+        console.error('Mongo getFacultyQueries error:', err.message);
+      }
+    }
+    return readJson(DB_QUERIES_FILE, SEED_FACULTY_QUERIES);
+  },
+
+  updateFacultyQuery: async (id, updates) => {
+    if (isMongoConnected) {
+      try {
+        const updated = await FacultyQueryModel.findOneAndUpdate(
+          { id },
+          { ...updates },
+          { new: true }
+        ).lean();
+        if (updated) return updated;
+      } catch (err) {
+        console.error('Mongo updateFacultyQuery error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_QUERIES_FILE, SEED_FACULTY_QUERIES);
+    const idx = local.findIndex((q) => q.id === id);
+    if (idx === -1) return null;
+    local[idx] = { ...local[idx], ...updates };
+    writeJson(DB_QUERIES_FILE, local);
+    return local[idx];
+  },
+
+  createFacultyQuery: async (data) => {
+    const newQuery = {
+      id: `query-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      createdAt: new Date().toISOString(),
+      status: 'open',
+      coordinatorResponse: '',
+      ...data,
+    };
+
+    if (isMongoConnected) {
+      try {
+        const created = await FacultyQueryModel.create(newQuery);
+        return created.toObject();
+      } catch (err) {
+        console.error('Mongo createFacultyQuery error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_QUERIES_FILE, SEED_FACULTY_QUERIES);
+    local.unshift(newQuery);
+    writeJson(DB_QUERIES_FILE, local);
+    return newQuery;
+  },
+
+  // --- Portal Settings ---
+  getSettings: async () => {
+    if (isMongoConnected) {
+      try {
+        const doc = await PortalSettingsModel.findOne({ id: 'main_settings' }).lean();
+        if (doc) return doc;
+      } catch (err) {
+        console.error('Mongo getSettings error:', err.message);
+      }
+    }
+    return readJson(DB_SETTINGS_FILE, DEFAULT_SETTINGS);
+  },
+
+  updateSettings: async (updates) => {
+    if (isMongoConnected) {
+      try {
+        const updated = await PortalSettingsModel.findOneAndUpdate(
+          { id: 'main_settings' },
+          { ...updates, updatedAt: new Date().toISOString() },
+          { new: true, upsert: true }
+        ).lean();
+        if (updated) return updated;
+      } catch (err) {
+        console.error('Mongo updateSettings error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_SETTINGS_FILE, DEFAULT_SETTINGS);
+    const newSettings = { ...local, ...updates, updatedAt: new Date().toISOString() };
+    writeJson(DB_SETTINGS_FILE, newSettings);
+    return newSettings;
+  },
+
+  // --- Announcements ---
+  getAnnouncements: async () => {
+    if (isMongoConnected) {
+      try {
+        return await AnnouncementModel.find({}).sort({ createdAt: -1 }).lean();
+      } catch (err) {
+        console.error('Mongo getAnnouncements error:', err.message);
+      }
+    }
+    return readJson(DB_ANNOUNCEMENTS_FILE, SEED_ANNOUNCEMENTS);
+  },
+
+  createAnnouncement: async ({ message, authorName }) => {
+    const newAnn = {
+      id: `ann-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      message,
+      authorName: authorName || 'Student Coordinator',
+      createdAt: new Date().toISOString(),
+    };
+
+    if (isMongoConnected) {
+      try {
+        const created = await AnnouncementModel.create(newAnn);
+        return created.toObject();
+      } catch (err) {
+        console.error('Mongo createAnnouncement error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_ANNOUNCEMENTS_FILE, SEED_ANNOUNCEMENTS);
+    local.unshift(newAnn);
+    writeJson(DB_ANNOUNCEMENTS_FILE, local);
+    return newAnn;
+  },
+
+  deleteAnnouncement: async (id) => {
+    if (isMongoConnected) {
+      try {
+        await AnnouncementModel.deleteOne({ id });
+        return true;
+      } catch (err) {
+        console.error('Mongo deleteAnnouncement error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_ANNOUNCEMENTS_FILE, SEED_ANNOUNCEMENTS);
+    const filtered = local.filter((a) => a.id !== id);
+    writeJson(DB_ANNOUNCEMENTS_FILE, filtered);
+    return true;
+  },
+
+  // --- Assigned Work & Directives ---
+  getAssignedWork: async () => {
+    if (isMongoConnected) {
+      try {
+        return await AssignedWorkModel.find({}).sort({ createdAt: -1 }).lean();
+      } catch (err) {
+        console.error('Mongo getAssignedWork error:', err.message);
+      }
+    }
+    return readJson(DB_ASSIGNED_WORK_FILE, SEED_ASSIGNED_WORK);
+  },
+
+  createAssignedWork: async (data) => {
+    const newWork = {
+      id: `work-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      createdAt: new Date().toISOString(),
+      status: 'active',
+      ...data,
+    };
+
+    if (isMongoConnected) {
+      try {
+        const created = await AssignedWorkModel.create(newWork);
+        return created.toObject();
+      } catch (err) {
+        console.error('Mongo createAssignedWork error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_ASSIGNED_WORK_FILE, SEED_ASSIGNED_WORK);
+    local.unshift(newWork);
+    writeJson(DB_ASSIGNED_WORK_FILE, local);
+    return newWork;
+  },
+
+  updateAssignedWorkStatus: async (id, status) => {
+    if (isMongoConnected) {
+      try {
+        const updated = await AssignedWorkModel.findOneAndUpdate(
+          { id },
+          { status },
+          { new: true }
+        ).lean();
+        if (updated) return updated;
+      } catch (err) {
+        console.error('Mongo updateAssignedWorkStatus error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_ASSIGNED_WORK_FILE, SEED_ASSIGNED_WORK);
+    const idx = local.findIndex((w) => w.id === id);
+    if (idx === -1) return null;
+    local[idx].status = status;
+    writeJson(DB_ASSIGNED_WORK_FILE, local);
+    return local[idx];
+  },
+
+  deleteAssignedWork: async (id) => {
+    if (isMongoConnected) {
+      try {
+        await AssignedWorkModel.deleteOne({ id });
+        return true;
+      } catch (err) {
+        console.error('Mongo deleteAssignedWork error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_ASSIGNED_WORK_FILE, SEED_ASSIGNED_WORK);
+    const filtered = local.filter((w) => w.id !== id);
+    writeJson(DB_ASSIGNED_WORK_FILE, filtered);
+    return true;
+  },
+};

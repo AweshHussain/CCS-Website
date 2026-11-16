@@ -1,0 +1,28 @@
+[
+  {
+    "id": "work-seed-1",
+    "title": "Implement Multi-Agent LLM Orchestration with RAG",
+    "description": "Design and benchmark a distributed retrieval-augmented pipeline using LangChain/LlamaIndex. Submit demo link and GitHub repository with latency and accuracy benchmarks.",
+    "domain": "Artificial Intelligence & Systems",
+    "assignedByName": "Dr. Rajesh Sharma",
+    "assignedByEmail": "faculty@ccs-society.org",
+    "assignedTo": "All Students",
+    "dueDate": "2026-11-30",
+    "priority": "high",
+    "status": "active",
+    "createdAt": "2026-11-14T20:19:39.681Z"
+  },
+  {
+    "id": "work-seed-2",
+    "title": "Distributed WebSocket State Synchronizer",
+    "description": "Develop a high-throughput WebSocket broadcast system with Redis pub/sub backplane to handle concurrent student terminal updates.",
+    "domain": "Cloud Infrastructure & Networks",
+    "assignedByName": "Dr. Rajesh Sharma",
+    "assignedByEmail": "faculty@ccs-society.org",
+    "assignedTo": "All Students",
+    "dueDate": "2026-12-05",
+    "priority": "normal",
+    "status": "active",
+    "createdAt": "2026-11-13T20:19:39.681Z"
+  }
+]
