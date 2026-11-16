@@ -15,16 +15,18 @@ if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, UPLOADS_DIR);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `avatar-${uniqueSuffix}${ext}`);
-  },
-});
+const storage = process.env.VERCEL
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, UPLOADS_DIR);
+      },
+      filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+        cb(null, `avatar-${uniqueSuffix}${ext}`);
+      },
+    });
 
 const upload = multer({
   storage,
@@ -226,7 +228,9 @@ router.post('/users/:id/avatar', upload.single('avatar'), async (req, res) => {
       return res.status(400).json({ success: false, message: 'No image file uploaded.' });
     }
 
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    const avatarUrl = req.file.buffer
+      ? `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`
+      : `/uploads/avatars/${req.file.filename}`;
     const updated = await db.updateUser(id, { avatarUrl });
     if (!updated) {
       return res.status(404).json({ success: false, message: 'User not found.' });

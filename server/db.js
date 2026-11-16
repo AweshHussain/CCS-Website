@@ -393,6 +393,11 @@ function writeJson(file, data) {
  * Connect to MongoDB Atlas (CCS-Cluster) with automatic seeding & fallback
  */
 export async function connectDB() {
+  if (mongoose.connection && mongoose.connection.readyState >= 1) {
+    isMongoConnected = true;
+    return true;
+  }
+
   const uri = process.env.MONGODB_URI;
   if (!uri) {
     console.log('⚠️ [Database] MONGODB_URI not found. Using local JSON store.');
