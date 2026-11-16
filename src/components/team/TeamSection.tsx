@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Users, Search, GitFork, LayoutGrid, Network } from 'lucide-react';
+import { Users, Search } from 'lucide-react';
 import { teamData } from '../../data/teamData';
 import { TeamCard } from './TeamCard';
 import { TeamMember } from '../../types';
@@ -7,7 +7,6 @@ import { TeamMember } from '../../types';
 const CATEGORIES = ['All', 'Leadership', 'Faculty', 'Technical', 'Development', 'Design', 'Operations'] as const;
 
 export const TeamSection: React.FC = () => {
-  const [viewMode, setViewMode] = useState<'tree' | 'grid'>('tree');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -54,7 +53,7 @@ export const TeamSection: React.FC = () => {
     });
   }, [selectedCategory, searchQuery]);
 
-  const isTreeActive = viewMode === 'tree' && !searchQuery && selectedCategory === 'All';
+  const isTreeActive = !searchQuery && selectedCategory === 'All';
 
   return (
     <section id="team" className="relative py-24 sm:py-32 px-4 sm:px-8 lg:px-12 w-full overflow-hidden">
@@ -80,51 +79,16 @@ export const TeamSection: React.FC = () => {
             </p>
           </div>
 
-          {/* Right Action Tools: Search & Tree/Grid View Switcher */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {/* View Mode Toggle */}
-            <div className="flex items-center p-1 rounded-full glass-panel border border-white/10 bg-black/40">
-              <button
-                onClick={() => {
-                  setViewMode('tree');
-                  setSelectedCategory('All');
-                }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono transition-all ${
-                  viewMode === 'tree'
-                    ? 'bg-[#E50920] text-white font-semibold shadow-md shadow-[#E50920]/30'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-                title="Tree Hierarchy View"
-              >
-                <Network className="w-3.5 h-3.5" />
-                <span>Tree View</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono transition-all ${
-                  viewMode === 'grid'
-                    ? 'bg-[#E50920] text-white font-semibold shadow-md shadow-[#E50920]/30'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-                title="Grid Catalog View"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span>Grid View</span>
-              </button>
-            </div>
-
-            {/* Search Bar */}
-            <div className="relative w-full sm:w-64">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by name or role..."
-                className="w-full pl-10 pr-4 py-2 rounded-full glass-panel border border-white/10 text-xs font-sans text-white placeholder-zinc-400 focus:outline-none focus:border-[#E50920]/50 transition-colors"
-              />
-            </div>
+          {/* Right Action Tools: Search Bar */}
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name or role..."
+              className="w-full pl-10 pr-4 py-2 rounded-full glass-panel border border-white/10 text-xs font-sans text-white placeholder-zinc-400 focus:outline-none focus:border-[#E50920]/50 transition-colors"
+            />
           </div>
         </div>
 
@@ -231,11 +195,10 @@ export const TeamSection: React.FC = () => {
                 onClick={() => {
                   setSelectedCategory('All');
                   setSearchQuery('');
-                  setViewMode('tree');
                 }}
                 className="mt-4 px-4 py-2 rounded-full text-xs font-mono text-[#E50920] hover:text-white glass-panel cursor-pointer"
               >
-                Reset Filters & Return to Tree View
+                Reset Filters
               </button>
             </div>
           )
