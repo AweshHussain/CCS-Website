@@ -239,12 +239,6 @@ router.put('/users/:id', async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 });
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
-  }
-});
 
 // PATCH /api/admin/users/:id/permissions - Coordinator updates granular permissions for a faculty or coordinator
 router.patch('/users/:id/permissions', async (req, res) => {
