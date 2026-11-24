@@ -1,0 +1,26 @@
+[
+  {
+    "id": "group-1",
+    "name": "Team Alpha — Distributed Core",
+    "code": "GRP-01",
+    "description": "High-throughput distributed systems, vector indexing, and real-time mesh pipelines.",
+    "memberIds": [
+      "user-student-1"
+    ],
+    "maxCapacity": 4,
+    "createdById": "user-coordinator-1",
+    "createdAt": "2026-11-23T00:00:00.000Z",
+    "updatedAt": "2026-11-25T00:00:00.000Z"
+  },
+  {
+    "id": "group-2",
+    "name": "Team Beta — AI & Intelligence",
+    "code": "GRP-02",
+    "description": "Autonomous multi-agent orchestration, RAG architectures, and model quantization.",
+    "memberIds": [],
+    "maxCapacity": 4,
+    "createdById": "user-coordinator-1",
+    "createdAt": "2026-11-24T00:00:00.000Z",
+    "updatedAt": "2026-11-25T00:00:00.000Z"
+  }
+]

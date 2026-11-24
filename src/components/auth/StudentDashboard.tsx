@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   GraduationCap,
   FolderGit2,
+  Users,
   Plus,
   Send,
   ExternalLink,
@@ -25,6 +26,8 @@ import {
 } from 'lucide-react';
 import { DashboardBackground } from '../ui/DashboardBackground';
 import { UserProfilePage } from './UserProfilePage';
+import { TeamCollaborationHub } from '../team/TeamCollaborationHub';
+import { registerSocketUser } from '../../services/teamSocket';
 import { useSessionTimer } from '../../utils/sessionSecurity';
 
 interface StudentDashboardProps {
@@ -35,6 +38,8 @@ interface StudentDashboardProps {
     role: string;
     department: string;
     avatarUrl?: string;
+    groupId?: string | null;
+    groupName?: string | null;
     permissions?: {
       canBroadcastAnnouncements?: boolean;
       canReviewProjects?: boolean;
@@ -48,7 +53,7 @@ interface StudentDashboardProps {
   onBackToHome: () => void;
 }
 
-type StudentTab = 'my_projects' | 'assigned_work' | 'announcements' | 'profile';
+type StudentTab = 'team_collaboration' | 'my_projects' | 'assigned_work' | 'announcements' | 'profile';
 
 interface StudentUpdate {
   id: string;
@@ -94,9 +99,14 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   onLogout,
   onBackToHome,
 }) => {
-  const [currentTab, setCurrentTab] = useState<StudentTab>('my_projects');
+  const [currentTab, setCurrentTab] = useState<StudentTab>('team_collaboration');
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  // Register real-time presence with socket
+  useEffect(() => {
+    registerSocketUser(currentUser.id, currentUser.groupId || null, currentUser.fullName);
+  }, [currentUser.id, currentUser.groupId, currentUser.fullName]);
 
   // Active 10-Hour Session Expiry Watcher (auto logout on expiry)
   const session = useSessionTimer(token, onLogout);
@@ -355,6 +365,21 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             ? 'Project milestone updated successfully! Re-submitted for coordinator review.'
             : 'New project submitted successfully! Society Coordinators notified.'
         );
+
+        // Broadcast to teammates if student belongs to a group
+        if (currentUser.groupId) {
+          fetch(`/api/team/activities/${currentUser.groupId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              actionType: 'milestone',
+              title: `${editingProjectId ? 'Updated milestone on' : 'Submitted project:'} ${projectTitle.trim()}`,
+              details: `Progress milestone at ${progressPercent}%. Domain: ${domain}.`,
+              link: githubUrl.trim() || demoUrl.trim() || '',
+            }),
+          }).catch(() => {});
+        }
+
         setShowProjectModal(false);
         fetchData();
       } else {
@@ -392,6 +417,19 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
           {/* Center Tabs */}
           <nav className="flex items-center gap-1 overflow-x-auto max-w-[calc(100vw-220px)] sm:max-w-none no-scrollbar py-1">
+            <button
+              onClick={() => setCurrentTab('team_collaboration')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer shrink-0 ${
+                currentTab === 'team_collaboration'
+                  ? 'bg-[#E50920] text-white font-semibold shadow-md shadow-[#E50920]/25'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Team Collaboration</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            </button>
+
             <button
               onClick={() => setCurrentTab('my_projects')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer shrink-0 ${
@@ -551,6 +589,15 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             <span>⚠️ {actionError}</span>
             <button onClick={() => setActionError('')} className="text-rose-400 hover:text-white">✕</button>
           </div>
+        )}
+
+        {/* ================= TAB 0: TEAM COLLABORATION HUB ================= */}
+        {currentTab === 'team_collaboration' && (
+          <TeamCollaborationHub
+            currentUser={currentUser}
+            token={token}
+            onRefreshUser={fetchData}
+          />
         )}
 
         {/* ================= TAB 1: MY PROJECTS & WORK UPDATES ================= */}

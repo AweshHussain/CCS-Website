@@ -1,0 +1,24 @@
+[
+  {
+    "id": "msg-seed-1",
+    "type": "group",
+    "groupId": "group-1",
+    "senderId": "user-student-1",
+    "senderName": "Aarav Mehta",
+    "senderAvatar": "",
+    "content": "Welcome team! I have initialized the repository and set up the base vector indexing pipeline.",
+    "attachments": [],
+    "createdAt": "2026-11-24T18:00:00.000Z"
+  },
+  {
+    "id": "msg-seed-2",
+    "type": "group",
+    "groupId": "group-1",
+    "senderId": "user-coordinator-1",
+    "senderName": "Awesh Hussain",
+    "senderAvatar": "/assets/team/awesh.png",
+    "content": "Great initiative Team Alpha. Keep pushing updates to the repo and track your milestones here.",
+    "attachments": [],
+    "createdAt": "2026-11-24T20:00:00.000Z"
+  }
+]

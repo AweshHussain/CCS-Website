@@ -74,6 +74,8 @@ router.get('/users', async (req, res) => {
           role: u.role,
           department: u.department,
           avatarUrl: u.avatarUrl,
+          groupId: u.groupId || null,
+          groupName: u.groupName || null,
           permissions: u.permissions || {
             canBroadcastAnnouncements: u.role === 'coordinator',
             canReviewProjects: u.role === 'coordinator',
@@ -92,7 +94,7 @@ router.get('/users', async (req, res) => {
 // POST /api/admin/users - Admin directly creates an account, storing password as BCRYPT HASH + AES-256 VAULT CIPHER
 router.post('/users', async (req, res) => {
   try {
-    const { email, password, fullName, role, department } = req.body;
+    const { email, password, fullName, role, department, groupOption, existingGroupId, newGroupName } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Email and password are required.' });
@@ -121,7 +123,38 @@ router.post('/users', async (req, res) => {
       role: assignedRole,
       department: department || 'General Engineering',
       avatarUrl: '',
+      groupId: null,
+      groupName: null,
     });
+
+    // Handle Team Group Assignment Options (For Students)
+    if (assignedRole === 'student') {
+      if (groupOption === 'existing' && existingGroupId) {
+        try {
+          await db.addMemberToGroup(existingGroupId, newUser.id);
+          const grp = await db.getGroupById(existingGroupId);
+          newUser.groupId = existingGroupId;
+          newUser.groupName = grp?.name || null;
+        } catch (grpErr) {
+          console.warn('Group assignment warning:', grpErr.message);
+        }
+      } else if (groupOption === 'new') {
+        try {
+          const allGroups = await db.getGroups();
+          const count = allGroups.length + 1;
+          const groupName = newGroupName && newGroupName.trim() ? newGroupName.trim() : `Team Group ${count}`;
+          const newGroup = await db.createGroup({
+            name: groupName,
+            createdById: req.user.id,
+          });
+          await db.addMemberToGroup(newGroup.id, newUser.id);
+          newUser.groupId = newGroup.id;
+          newUser.groupName = newGroup.name;
+        } catch (grpErr) {
+          console.warn('New group creation warning:', grpErr.message);
+        }
+      }
+    }
 
     return res.status(201).json({
       success: true,
@@ -132,9 +165,11 @@ router.post('/users', async (req, res) => {
         fullName: newUser.fullName,
         role: newUser.role,
         department: newUser.department,
+        groupId: newUser.groupId || null,
+        groupName: newUser.groupName || null,
         passwordHash: newUser.passwordHash,
       },
-      // Plain password returned so admin can immediately copy and provide to faculty/student
+      // Plain password returned so admin can immediately copy and provide to student
       issuedPassword: password,
     });
   } catch (error) {
@@ -146,7 +181,7 @@ router.post('/users', async (req, res) => {
 router.put('/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, password, fullName, role, department, avatarUrl, permissions } = req.body;
+    const { email, password, fullName, role, department, avatarUrl, permissions, groupId } = req.body;
 
     const existing = await db.findUserById(id);
     if (!existing) {
@@ -167,6 +202,21 @@ router.put('/users/:id', async (req, res) => {
       updates.vaultCipher = encryptPassword(password);
     }
 
+    // Handle group re-assignment / un-assignment
+    if (groupId !== undefined && groupId !== existing.groupId) {
+      if (existing.groupId) {
+        await db.removeMemberFromGroup(existing.groupId, id);
+      }
+      if (groupId) {
+        const targetGroup = await db.addMemberToGroup(groupId, id);
+        updates.groupId = targetGroup.id;
+        updates.groupName = targetGroup.name;
+      } else {
+        updates.groupId = null;
+        updates.groupName = null;
+      }
+    }
+
     const updated = await db.updateUser(id, updates);
 
     return res.status(200).json({
@@ -179,8 +229,16 @@ router.put('/users/:id', async (req, res) => {
         role: updated.role,
         department: updated.department,
         avatarUrl: updated.avatarUrl,
+        groupId: updated.groupId || null,
+        groupName: updated.groupName || null,
         permissions: updated.permissions,
         passwordHash: updated.passwordHash,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
       },
     });
   } catch (error) {

@@ -19,6 +19,8 @@
     "role": "student",
     "department": "Artificial Intelligence & Data Science",
     "avatarUrl": "",
+    "groupId": "group-1",
+    "groupName": "Team Alpha — Distributed Core",
     "createdAt": "2026-11-15T15:45:50.037Z"
   },
   {

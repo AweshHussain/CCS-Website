@@ -1,0 +1,26 @@
+[
+  {
+    "id": "act-seed-1",
+    "groupId": "group-1",
+    "userId": "user-student-1",
+    "userName": "Aarav Mehta",
+    "userAvatar": "",
+    "actionType": "commit",
+    "title": "Pushed commit 4f9a2b1 — HNSW indexing core",
+    "details": "Added vector normalization and SIMD cosine distance calculations in src/engine.",
+    "link": "https://github.com/ccs-society/neuromesh",
+    "timestamp": "2026-11-24T22:00:00.000Z"
+  },
+  {
+    "id": "act-seed-2",
+    "groupId": "group-1",
+    "userId": "user-student-1",
+    "userName": "Aarav Mehta",
+    "userAvatar": "",
+    "actionType": "milestone",
+    "title": "Completed Milestone: Baseline k-NN benchmark passed",
+    "details": "Achieved 3.8ms latency across 500k test vectors on staging node.",
+    "link": "https://neuromesh.ccs-society.org",
+    "timestamp": "2026-11-24T23:30:00.000Z"
+  }
+]

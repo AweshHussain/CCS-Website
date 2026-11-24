@@ -17,6 +17,9 @@ const DB_QUERIES_FILE = path.join(DATA_DIR, 'faculty_queries.json');
 const DB_SETTINGS_FILE = path.join(DATA_DIR, 'portal_settings.json');
 const DB_ANNOUNCEMENTS_FILE = path.join(DATA_DIR, 'announcements.json');
 const DB_ASSIGNED_WORK_FILE = path.join(DATA_DIR, 'assigned_work.json');
+const DB_GROUPS_FILE = path.join(DATA_DIR, 'groups.json');
+const DB_MESSAGES_FILE = path.join(DATA_DIR, 'team_messages.json');
+const DB_ACTIVITIES_FILE = path.join(DATA_DIR, 'team_activities.json');
 
 // Ensure local data directory exists for offline fallback
 if (!fs.existsSync(DATA_DIR)) {
@@ -36,6 +39,8 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ['coordinator', 'student'], default: 'student' },
     department: { type: String, default: 'General Engineering' },
     avatarUrl: { type: String, default: '' },
+    groupId: { type: String, default: null },
+    groupName: { type: String, default: null },
     permissions: {
       type: Object,
       default: () => ({
@@ -159,6 +164,68 @@ const assignedWorkSchema = new mongoose.Schema(
 export const AssignedWorkModel = mongoose.models.AssignedWork || mongoose.model('AssignedWork', assignedWorkSchema);
 
 // -------------------------------------------------------------
+// 7. Team Groups Schema (Max 4 students per group)
+// -------------------------------------------------------------
+const groupSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true, unique: true, index: true },
+    name: { type: String, required: true },
+    code: { type: String, default: 'GRP' },
+    description: { type: String, default: '' },
+    memberIds: { type: [String], default: [] },
+    maxCapacity: { type: Number, default: 4 },
+    createdById: { type: String, default: '' },
+    createdAt: { type: String, default: () => new Date().toISOString() },
+    updatedAt: { type: String, default: () => new Date().toISOString() },
+  },
+  { collection: 'ccs_groups' }
+);
+
+export const GroupModel = mongoose.models.Group || mongoose.model('Group', groupSchema);
+
+// -------------------------------------------------------------
+// 8. Team Messages Schema (Group & Direct Private Messaging)
+// -------------------------------------------------------------
+const teamMessageSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true, unique: true, index: true },
+    type: { type: String, enum: ['group', 'direct'], default: 'group', index: true },
+    groupId: { type: String, default: null, index: true },
+    senderId: { type: String, required: true, index: true },
+    senderName: { type: String, required: true },
+    senderAvatar: { type: String, default: '' },
+    recipientId: { type: String, default: null, index: true },
+    content: { type: String, required: true },
+    attachments: { type: Array, default: [] },
+    createdAt: { type: String, default: () => new Date().toISOString() },
+  },
+  { collection: 'ccs_team_messages' }
+);
+
+export const TeamMessageModel = mongoose.models.TeamMessage || mongoose.model('TeamMessage', teamMessageSchema);
+
+// -------------------------------------------------------------
+// 9. Team Live Activity Feed Schema
+// -------------------------------------------------------------
+const teamActivitySchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true, unique: true, index: true },
+    groupId: { type: String, required: true, index: true },
+    userId: { type: String, required: true },
+    userName: { type: String, required: true },
+    userAvatar: { type: String, default: '' },
+    actionType: { type: String, enum: ['commit', 'push', 'file_update', 'milestone', 'status_change', 'general'], default: 'commit' },
+    title: { type: String, required: true },
+    details: { type: String, default: '' },
+    link: { type: String, default: '' },
+    timestamp: { type: String, default: () => new Date().toISOString() },
+  },
+  { collection: 'ccs_team_activities' }
+);
+
+export const TeamActivityModel = mongoose.models.TeamActivity || mongoose.model('TeamActivity', teamActivitySchema);
+
+// -------------------------------------------------------------
 // Seed Data
 // -------------------------------------------------------------
 export const SEED_USERS = [
@@ -182,6 +249,8 @@ export const SEED_USERS = [
     role: 'student',
     department: 'Artificial Intelligence & Data Science',
     avatarUrl: '',
+    groupId: 'group-1',
+    groupName: 'Team Alpha — Distributed Core',
     createdAt: '2026-11-15T06:30:10.263Z',
   },
 ];
@@ -352,6 +421,83 @@ export const SEED_ASSIGNED_WORK = [
   },
 ];
 
+export const SEED_GROUPS = [
+  {
+    id: 'group-1',
+    name: 'Team Alpha — Distributed Core',
+    code: 'GRP-01',
+    description: 'High-throughput distributed systems, vector indexing, and real-time mesh pipelines.',
+    memberIds: ['user-student-1'],
+    maxCapacity: 4,
+    createdById: 'user-coordinator-1',
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'group-2',
+    name: 'Team Beta — AI & Intelligence',
+    code: 'GRP-02',
+    description: 'Autonomous multi-agent orchestration, RAG architectures, and model quantization.',
+    memberIds: [],
+    maxCapacity: 4,
+    createdById: 'user-coordinator-1',
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
+
+export const SEED_TEAM_MESSAGES = [
+  {
+    id: 'msg-seed-1',
+    type: 'group',
+    groupId: 'group-1',
+    senderId: 'user-student-1',
+    senderName: 'Aarav Mehta',
+    senderAvatar: '',
+    content: 'Welcome team! I have initialized the repository and set up the base vector indexing pipeline.',
+    attachments: [],
+    createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+  },
+  {
+    id: 'msg-seed-2',
+    type: 'group',
+    groupId: 'group-1',
+    senderId: 'user-coordinator-1',
+    senderName: 'Awesh Hussain',
+    senderAvatar: '/assets/team/awesh.png',
+    content: 'Great initiative Team Alpha. Keep pushing updates to the repo and track your milestones here.',
+    attachments: [],
+    createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+  },
+];
+
+export const SEED_TEAM_ACTIVITIES = [
+  {
+    id: 'act-seed-1',
+    groupId: 'group-1',
+    userId: 'user-student-1',
+    userName: 'Aarav Mehta',
+    userAvatar: '',
+    actionType: 'commit',
+    title: 'Pushed commit 4f9a2b1 — HNSW indexing core',
+    details: 'Added vector normalization and SIMD cosine distance calculations in src/engine.',
+    link: 'https://github.com/ccs-society/neuromesh',
+    timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
+  },
+  {
+    id: 'act-seed-2',
+    groupId: 'group-1',
+    userId: 'user-student-1',
+    userName: 'Aarav Mehta',
+    userAvatar: '',
+    actionType: 'milestone',
+    title: 'Completed Milestone: Baseline k-NN benchmark passed',
+    details: 'Achieved 3.8ms latency across 500k test vectors on staging node.',
+    link: 'https://neuromesh.ccs-society.org',
+    timestamp: new Date(Date.now() - 3600000 * 1).toISOString(),
+  },
+];
+
 let isMongoConnected = false;
 
 // -------------------------------------------------------------
@@ -441,6 +587,27 @@ export async function connectDB() {
     if (assignedWorkCount === 0) {
       console.log('📦 [Database] Seeding assigned work tasks into MongoDB Atlas...');
       await AssignedWorkModel.insertMany(SEED_ASSIGNED_WORK);
+    }
+
+    // 7. Seed Groups
+    const groupCount = await GroupModel.countDocuments();
+    if (groupCount === 0) {
+      console.log('📦 [Database] Seeding team groups into MongoDB Atlas...');
+      await GroupModel.insertMany(SEED_GROUPS);
+    }
+
+    // 8. Seed Team Messages
+    const messageCount = await TeamMessageModel.countDocuments();
+    if (messageCount === 0) {
+      console.log('📦 [Database] Seeding initial team messages into MongoDB Atlas...');
+      await TeamMessageModel.insertMany(SEED_TEAM_MESSAGES);
+    }
+
+    // 9. Seed Team Activities
+    const activityCount = await TeamActivityModel.countDocuments();
+    if (activityCount === 0) {
+      console.log('📦 [Database] Seeding initial team activities into MongoDB Atlas...');
+      await TeamActivityModel.insertMany(SEED_TEAM_ACTIVITIES);
     }
 
     console.log('✅ [Database] All cloud collections initialized and synchronized.');
@@ -857,5 +1024,259 @@ export const db = {
     const filtered = local.filter((w) => w.id !== id);
     writeJson(DB_ASSIGNED_WORK_FILE, filtered);
     return true;
+  },
+
+  // -------------------------------------------------------------
+  // --- Team Groups Management (Max 4 students per group) ---
+  // -------------------------------------------------------------
+  getGroups: async () => {
+    if (isMongoConnected) {
+      try {
+        return await GroupModel.find({}).sort({ createdAt: 1 }).lean();
+      } catch (err) {
+        console.error('Mongo getGroups error:', err.message);
+      }
+    }
+    return readJson(DB_GROUPS_FILE, SEED_GROUPS);
+  },
+
+  getGroupById: async (id) => {
+    if (isMongoConnected) {
+      try {
+        const found = await GroupModel.findOne({ id }).lean();
+        if (found) return found;
+      } catch (err) {
+        console.error('Mongo getGroupById error:', err.message);
+      }
+    }
+    const local = readJson(DB_GROUPS_FILE, SEED_GROUPS);
+    return local.find((g) => g.id === id) || null;
+  },
+
+  createGroup: async (data) => {
+    const allGroups = await db.getGroups();
+    const count = allGroups.length + 1;
+    const code = data.code || `GRP-${String(count).padStart(2, '0')}`;
+    const newGroup = {
+      id: `group-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      name: data.name || `Team Group ${count}`,
+      code,
+      description: data.description || '',
+      memberIds: Array.isArray(data.memberIds) ? data.memberIds.slice(0, 4) : [],
+      maxCapacity: 4,
+      createdById: data.createdById || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (isMongoConnected) {
+      try {
+        const created = await GroupModel.create(newGroup);
+        return created.toObject();
+      } catch (err) {
+        console.error('Mongo createGroup error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_GROUPS_FILE, SEED_GROUPS);
+    local.push(newGroup);
+    writeJson(DB_GROUPS_FILE, local);
+    return newGroup;
+  },
+
+  updateGroup: async (id, updates) => {
+    updates.updatedAt = new Date().toISOString();
+    if (isMongoConnected) {
+      try {
+        const updated = await GroupModel.findOneAndUpdate({ id }, updates, { new: true }).lean();
+        if (updated) return updated;
+      } catch (err) {
+        console.error('Mongo updateGroup error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_GROUPS_FILE, SEED_GROUPS);
+    const idx = local.findIndex((g) => g.id === id);
+    if (idx === -1) return null;
+    local[idx] = { ...local[idx], ...updates };
+    writeJson(DB_GROUPS_FILE, local);
+    return local[idx];
+  },
+
+  deleteGroup: async (id) => {
+    // 1. Unassign all users from this group
+    const users = await db.getUsers();
+    for (const u of users) {
+      if (u.groupId === id) {
+        await db.updateUser(u.id, { groupId: null, groupName: null });
+      }
+    }
+
+    if (isMongoConnected) {
+      try {
+        await GroupModel.deleteOne({ id });
+        return true;
+      } catch (err) {
+        console.error('Mongo deleteGroup error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_GROUPS_FILE, SEED_GROUPS);
+    const filtered = local.filter((g) => g.id !== id);
+    writeJson(DB_GROUPS_FILE, filtered);
+    return true;
+  },
+
+  addMemberToGroup: async (groupId, studentId) => {
+    const group = await db.getGroupById(groupId);
+    if (!group) throw new Error('Target group not found.');
+
+    if (group.memberIds.includes(studentId)) {
+      return group; // already a member
+    }
+
+    if (group.memberIds.length >= 4) {
+      throw new Error(`Group "${group.name}" is already at maximum capacity of 4 students.`);
+    }
+
+    const updatedMembers = [...group.memberIds, studentId];
+    const updatedGroup = await db.updateGroup(groupId, { memberIds: updatedMembers });
+
+    // Update student's user record
+    await db.updateUser(studentId, {
+      groupId: group.id,
+      groupName: group.name,
+    });
+
+    return updatedGroup;
+  },
+
+  removeMemberFromGroup: async (groupId, studentId) => {
+    const group = await db.getGroupById(groupId);
+    if (!group) return null;
+
+    const updatedMembers = group.memberIds.filter((m) => m !== studentId);
+    const updatedGroup = await db.updateGroup(groupId, { memberIds: updatedMembers });
+
+    // Clear student's group
+    await db.updateUser(studentId, {
+      groupId: null,
+      groupName: null,
+    });
+
+    return updatedGroup;
+  },
+
+  // -------------------------------------------------------------
+  // --- Team Messages (Group & Direct Private Messaging) ---
+  // -------------------------------------------------------------
+  getGroupMessages: async (groupId) => {
+    if (isMongoConnected) {
+      try {
+        return await TeamMessageModel.find({ type: 'group', groupId }).sort({ createdAt: 1 }).lean();
+      } catch (err) {
+        console.error('Mongo getGroupMessages error:', err.message);
+      }
+    }
+    const local = readJson(DB_MESSAGES_FILE, SEED_TEAM_MESSAGES);
+    return local
+      .filter((m) => m.type === 'group' && m.groupId === groupId)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  },
+
+  getDirectMessages: async (user1Id, user2Id) => {
+    if (isMongoConnected) {
+      try {
+        return await TeamMessageModel.find({
+          type: 'direct',
+          $or: [
+            { senderId: user1Id, recipientId: user2Id },
+            { senderId: user2Id, recipientId: user1Id },
+          ],
+        })
+          .sort({ createdAt: 1 })
+          .lean();
+      } catch (err) {
+        console.error('Mongo getDirectMessages error:', err.message);
+      }
+    }
+    const local = readJson(DB_MESSAGES_FILE, SEED_TEAM_MESSAGES);
+    return local
+      .filter(
+        (m) =>
+          m.type === 'direct' &&
+          ((m.senderId === user1Id && m.recipientId === user2Id) ||
+            (m.senderId === user2Id && m.recipientId === user1Id))
+      )
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  },
+
+  createMessage: async (data) => {
+    const newMsg = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      createdAt: new Date().toISOString(),
+      attachments: [],
+      ...data,
+    };
+
+    if (isMongoConnected) {
+      try {
+        const created = await TeamMessageModel.create(newMsg);
+        return created.toObject();
+      } catch (err) {
+        console.error('Mongo createMessage error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_MESSAGES_FILE, SEED_TEAM_MESSAGES);
+    local.push(newMsg);
+    writeJson(DB_MESSAGES_FILE, local);
+    return newMsg;
+  },
+
+  // -------------------------------------------------------------
+  // --- Team Live Activity Feed ---
+  // -------------------------------------------------------------
+  getTeamActivities: async (groupId, limit = 50) => {
+    if (isMongoConnected) {
+      try {
+        return await TeamActivityModel.find({ groupId })
+          .sort({ timestamp: -1 })
+          .limit(limit)
+          .lean();
+      } catch (err) {
+        console.error('Mongo getTeamActivities error:', err.message);
+      }
+    }
+    const local = readJson(DB_ACTIVITIES_FILE, SEED_TEAM_ACTIVITIES);
+    return local
+      .filter((a) => a.groupId === groupId)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, limit);
+  },
+
+  createTeamActivity: async (data) => {
+    const newAct = {
+      id: `act-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      timestamp: new Date().toISOString(),
+      actionType: 'commit',
+      details: '',
+      link: '',
+      ...data,
+    };
+
+    if (isMongoConnected) {
+      try {
+        const created = await TeamActivityModel.create(newAct);
+        return created.toObject();
+      } catch (err) {
+        console.error('Mongo createTeamActivity error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_ACTIVITIES_FILE, SEED_TEAM_ACTIVITIES);
+    local.unshift(newAct);
+    writeJson(DB_ACTIVITIES_FILE, local);
+    return newAct;
   },
 };

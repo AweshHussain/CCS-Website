@@ -149,6 +149,8 @@ router.post('/login', async (req, res) => {
         role: user.role,
         department: user.department,
         avatarUrl: user.avatarUrl,
+        groupId: user.groupId || null,
+        groupName: user.groupName || null,
         permissions: user.permissions || {
           canBroadcastAnnouncements: user.role === 'coordinator',
           canReviewProjects: user.role === 'coordinator',
@@ -380,6 +382,8 @@ router.post('/refresh-session', verifyToken, async (req, res) => {
         role: user.role,
         department: user.department,
         avatarUrl: user.avatarUrl,
+        groupId: user.groupId || null,
+        groupName: user.groupName || null,
         permissions: user.permissions || {
           canBroadcastAnnouncements: user.role === 'coordinator',
           canReviewProjects: user.role === 'coordinator',

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import coordinatorRoutes from './routes/coordinatorRoutes.js';
+import teamRoutes from './routes/teamRoutes.js';
 import { db } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -31,6 +32,7 @@ app.use('/uploads', express.static(uploadsDir));
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/coordinator', coordinatorRoutes);
+app.use('/api/team', teamRoutes);
 
 // Public Announcement Endpoint for Public Website Marquee
 app.get('/api/announcement', async (req, res) => {
