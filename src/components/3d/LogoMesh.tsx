@@ -7,7 +7,7 @@ interface LogoMeshProps {
   reducedMotion?: boolean;
   theme?: 'dark' | 'light';
   authPhase?: 'idle' | 'scanning' | 'verifying' | 'granted' | 'dashboard';
-  selectedRole?: 'student' | 'coordinator' | 'faculty';
+  selectedRole?: 'student' | 'coordinator';
 }
 
 export const LogoMesh: React.FC<LogoMeshProps> = ({

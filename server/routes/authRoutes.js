@@ -61,7 +61,7 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
     }
 
-    const validRoles = ['student', 'coordinator', 'faculty'];
+    const validRoles = ['student', 'coordinator'];
     const assignedRole = validRoles.includes(role) ? role : 'student';
 
     // 1. Cryptographic Bcrypt Hash
@@ -151,8 +151,8 @@ router.post('/login', async (req, res) => {
         avatarUrl: user.avatarUrl,
         permissions: user.permissions || {
           canBroadcastAnnouncements: user.role === 'coordinator',
-          canReviewProjects: user.role === 'coordinator' || user.role === 'faculty',
-          canAssignWork: user.role === 'coordinator' || user.role === 'faculty',
+          canReviewProjects: user.role === 'coordinator',
+          canAssignWork: user.role === 'coordinator',
           canManageAccounts: user.role === 'coordinator',
         },
       },
@@ -181,8 +181,8 @@ router.get('/me', verifyToken, async (req, res) => {
         avatarUrl: user.avatarUrl,
         permissions: user.permissions || {
           canBroadcastAnnouncements: user.role === 'coordinator',
-          canReviewProjects: user.role === 'coordinator' || user.role === 'faculty',
-          canAssignWork: user.role === 'coordinator' || user.role === 'faculty',
+          canReviewProjects: user.role === 'coordinator',
+          canAssignWork: user.role === 'coordinator',
           canManageAccounts: user.role === 'coordinator',
         },
         createdAt: user.createdAt,
@@ -382,8 +382,8 @@ router.post('/refresh-session', verifyToken, async (req, res) => {
         avatarUrl: user.avatarUrl,
         permissions: user.permissions || {
           canBroadcastAnnouncements: user.role === 'coordinator',
-          canReviewProjects: user.role === 'coordinator' || user.role === 'faculty',
-          canAssignWork: user.role === 'coordinator' || user.role === 'faculty',
+          canReviewProjects: user.role === 'coordinator',
+          canAssignWork: user.role === 'coordinator',
           canManageAccounts: user.role === 'coordinator',
         },
       },

@@ -9,7 +9,7 @@ interface Floating3DLogoProps {
   isWatermark?: boolean;
   theme?: 'dark' | 'light';
   authPhase?: 'idle' | 'scanning' | 'verifying' | 'granted' | 'dashboard';
-  selectedRole?: 'student' | 'coordinator' | 'faculty';
+  selectedRole?: 'student' | 'coordinator';
 }
 
 export const Floating3DLogo: React.FC<Floating3DLogoProps> = ({

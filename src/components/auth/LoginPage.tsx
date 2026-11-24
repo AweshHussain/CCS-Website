@@ -38,9 +38,7 @@ import { CoordinatorLandingPage } from './CoordinatorLandingPage';
 import { ChangePasswordModal } from './ChangePasswordModal';
 import { ChangeEmailModal } from './ChangeEmailModal';
 import { StudentWorkPanel } from './StudentWorkPanel';
-import { FacultyQueriesPanel } from './FacultyQueriesPanel';
 import { PortalSettingsPanel } from './PortalSettingsPanel';
-import { FacultyDashboard } from './FacultyDashboard';
 import { StudentDashboard } from './StudentDashboard';
 import { DashboardBackground } from '../ui/DashboardBackground';
 
@@ -50,7 +48,7 @@ interface LoginPageProps {
   onBackToHome: () => void;
 }
 
-type RoleType = 'coordinator' | 'faculty' | 'student';
+type RoleType = 'coordinator' | 'student';
 
 interface RoleConfig {
   id: RoleType;
@@ -92,26 +90,6 @@ const ROLES: RoleConfig[] = [
       stat2Value: '18 Mounted',
       stat3Label: 'Dispatch Queue',
       stat3Value: '0 Pending',
-    },
-  },
-  {
-    id: 'faculty',
-    title: 'Faculty',
-    shortLabel: 'Faculty',
-    tagline: 'ADVISORY & GOVERNANCE',
-    badge: 'COUNCIL // GOV',
-    glyphLabel: 'OUTER SHIELD // 01',
-    icon: Award,
-    clearanceLevel: 'LEVEL 3: COUNCIL GOVERNOR',
-    placeholderEmail: 'faculty@institution.edu',
-    description: 'Academic council oversight, research funding authorization, and institutional governance.',
-    telemetry: {
-      stat1Label: 'Council Authority',
-      stat1Value: 'Tier-1 Sign-off',
-      stat2Label: 'Lab Grants',
-      stat2Value: '14 Active Units',
-      stat3Label: 'Audit Status',
-      stat3Value: 'Fully Compliant',
     },
   },
   {
@@ -157,7 +135,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showChangeEmailModal, setShowChangeEmailModal] = useState(false);
   const [pendingSubmissionsCount, setPendingSubmissionsCount] = useState(0);
-  const [openQueriesCount, setOpenQueriesCount] = useState(0);
   const [totalUsersCount, setTotalUsersCount] = useState(0);
 
   // Poll/fetch badges when logged in
@@ -165,17 +142,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
     if (!authToken || !currentUser) return;
     const fetchCounts = async () => {
       try {
-        const [resSub, resQ, resU] = await Promise.all([
+        const [resSub, resU] = await Promise.all([
           fetch('/api/coordinator/student-updates', { headers: { Authorization: `Bearer ${authToken}` } }),
-          fetch('/api/coordinator/faculty-queries', { headers: { Authorization: `Bearer ${authToken}` } }),
           fetch('/api/admin/users', { headers: { Authorization: `Bearer ${authToken}` } }),
         ]);
-        const [dataSub, dataQ, dataU] = await Promise.all([resSub.json(), resQ.json(), resU.json()]);
+        const [dataSub, dataU] = await Promise.all([resSub.json(), resU.json()]);
         if (dataSub.success) {
           setPendingSubmissionsCount((dataSub.updates || []).filter((u: any) => u.status === 'pending').length);
-        }
-        if (dataQ.success) {
-          setOpenQueriesCount((dataQ.queries || []).filter((q: any) => q.status === 'open' || q.status === 'in_review').length);
         }
         if (dataU.success) {
           setTotalUsersCount((dataU.users || []).length);
@@ -360,7 +333,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
           onBackToHome={onBackToHome}
           onLogout={handleLogout}
           pendingSubmissionsCount={pendingSubmissionsCount}
-          openQueriesCount={openQueriesCount}
           totalUsersCount={totalUsersCount}
         />
 
@@ -379,13 +351,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
             <StudentWorkPanel
               token={authToken!}
               onCountUpdate={(cnt) => setPendingSubmissionsCount(cnt)}
-            />
-          )}
-
-          {coordinatorTab === 'faculty_queries' && (
-            <FacultyQueriesPanel
-              token={authToken!}
-              onCountUpdate={(cnt) => setOpenQueriesCount(cnt)}
             />
           )}
 
@@ -437,19 +402,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
     );
   }
 
-  // 2. Dedicated Faculty Dashboard (Check updates, assign work, directives)
-  if (authStatus === 'dashboard' && currentUser && currentUser.role === 'faculty') {
-    return (
-      <FacultyDashboard
-        currentUser={currentUser}
-        token={authToken!}
-        onLogout={handleLogout}
-        onBackToHome={onBackToHome}
-      />
-    );
-  }
-
-  // 3. Dedicated Student Dashboard (Check assignments, update projects & milestones)
+  // 2. Dedicated Student Dashboard (Check assignments, update projects & milestones)
   if (authStatus === 'dashboard' && currentUser && currentUser.role === 'student') {
     return (
       <StudentDashboard
@@ -529,9 +482,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
       <div className="w-full relative z-10 flex-1 flex flex-col justify-center py-2">
         {/* If Logged In: Show Sleek Post-Login Simulation Dashboard */}
         {authStatus === 'dashboard' ? (
-          currentUser && (currentUser.role === 'coordinator' || currentUser.role === 'faculty') ? (
+          currentUser && currentUser.role === 'coordinator' ? (
             /* ============================================================== */
-            /* EXECUTIVE & FACULTY DASHBOARD: ACCOUNT & CREDENTIAL AUTHORITY  */
+            /* EXECUTIVE COORDINATOR DASHBOARD: ACCOUNT & CREDENTIAL AUTHORITY */
             /* ============================================================== */
             <div className="max-w-5xl mx-auto w-full relative z-10 animate-fadeIn space-y-6">
               {/* Top Bar with Logout & Return to Home */}
@@ -567,7 +520,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
                 </div>
               </div>
 
-              {/* The Dedicated Panel for Managing & Granting Accounts to Faculty & Students */}
+              {/* The Dedicated Panel for Managing & Granting Accounts to Coordinators & Students */}
               <AccountManagementPanel
                 currentUser={currentUser}
                 token={authToken!}
@@ -843,8 +796,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
                     </span>
                   </div>
 
-                  {/* THE 3 COLUMNS SIDE-BY-SIDE */}
-                  <div className="grid grid-cols-3 gap-2">
+                  {/* THE 2 ROLES SIDE-BY-SIDE */}
+                  <div className="grid grid-cols-2 gap-3">
                     {ROLES.map((role) => {
                       const isSelected = selectedRole === role.id;
                       const RoleIcon = role.icon;

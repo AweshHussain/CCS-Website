@@ -3,7 +3,7 @@ import { Floating3DLogo } from '../3d/Floating3DLogo';
 import { ParticleBackground } from './ParticleBackground';
 
 interface DashboardBackgroundProps {
-  role?: 'coordinator' | 'faculty' | 'student';
+  role?: 'coordinator' | 'student';
 }
 
 export const DashboardBackground: React.FC<DashboardBackgroundProps> = ({ role = 'coordinator' }) => {

@@ -45,9 +45,9 @@ const upload = multer({
 
 const router = express.Router();
 
-// All routes here require authentication as 'coordinator' or 'faculty'
+// All routes here require authentication as 'coordinator'
 router.use(verifyToken);
-router.use(requireRoles(['coordinator', 'faculty']));
+router.use(requireRoles(['coordinator']));
 
 // GET /api/admin/users - List all users
 // Passwords in DB are stored as Bcrypt hashes.
@@ -76,8 +76,8 @@ router.get('/users', async (req, res) => {
           avatarUrl: u.avatarUrl,
           permissions: u.permissions || {
             canBroadcastAnnouncements: u.role === 'coordinator',
-            canReviewProjects: u.role === 'coordinator' || u.role === 'faculty',
-            canAssignWork: u.role === 'coordinator' || u.role === 'faculty',
+            canReviewProjects: u.role === 'coordinator',
+            canAssignWork: u.role === 'coordinator',
             canManageAccounts: u.role === 'coordinator',
           },
           createdAt: u.createdAt,
@@ -103,7 +103,7 @@ router.post('/users', async (req, res) => {
       return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
     }
 
-    const validRoles = ['student', 'coordinator', 'faculty'];
+    const validRoles = ['student', 'coordinator'];
     const assignedRole = validRoles.includes(role) ? role : 'student';
 
     // Hash the password with bcrypt (10 rounds salt) for authentication

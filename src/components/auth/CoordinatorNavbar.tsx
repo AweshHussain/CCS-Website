@@ -20,7 +20,6 @@ import { useSessionTimer } from '../../utils/sessionSecurity';
 export type CoordinatorTabType =
   | 'dashboard'
   | 'student_work'
-  | 'faculty_queries'
   | 'accounts'
   | 'settings';
 
@@ -42,7 +41,6 @@ interface CoordinatorNavbarProps {
   onBackToHome: () => void;
   onLogout: () => void;
   pendingSubmissionsCount?: number;
-  openQueriesCount?: number;
   totalUsersCount?: number;
 }
 
@@ -57,7 +55,6 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
   onBackToHome,
   onLogout,
   pendingSubmissionsCount = 0,
-  openQueriesCount = 0,
   totalUsersCount = 0,
 }) => {
   const [profileOpen, setProfileOpen] = useState(false);
@@ -116,12 +113,6 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
       icon: FolderGit2,
       count: pendingSubmissionsCount,
     },
-    {
-      id: 'faculty_queries' as CoordinatorTabType,
-      label: 'Faculty Queries',
-      icon: GraduationCap,
-      count: openQueriesCount,
-    },
   ];
 
   return (
@@ -160,7 +151,7 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
                 {item.count > 0 && (
                   <span
                     className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                      item.id === 'student_work' || item.id === 'faculty_queries'
+                      item.id === 'student_work'
                         ? 'bg-[#E50920] text-white font-semibold'
                         : 'bg-white/10 text-zinc-300'
                     }`}

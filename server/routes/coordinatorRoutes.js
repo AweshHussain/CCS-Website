@@ -26,7 +26,7 @@ router.get('/student-updates', async (req, res) => {
 });
 
 // PUT /api/coordinator/student-updates/:id/status - Coordinator reviews submission
-router.put('/student-updates/:id/status', requireRoles(['coordinator', 'faculty']), async (req, res) => {
+router.put('/student-updates/:id/status', requireRoles(['coordinator']), async (req, res) => {
   try {
     const { id } = req.params;
     const { status, coordinatorFeedback } = req.body;
@@ -259,7 +259,7 @@ router.post('/announcements', async (req, res) => {
     }
     const created = await db.createAnnouncement({
       message: message.trim(),
-      authorName: req.user.fullName || (req.user.role === 'faculty' ? 'Faculty Advisor' : 'Student Member'),
+      authorName: req.user.fullName || (req.user.role === 'coordinator' ? 'Lead Coordinator' : 'Student Member'),
     });
     return res.status(201).json({
       success: true,
@@ -312,8 +312,8 @@ router.get('/assigned-work', async (req, res) => {
   }
 });
 
-// POST /api/coordinator/assigned-work - Faculty or Coordinator creates a work assignment
-router.post('/assigned-work', requireRoles(['faculty', 'coordinator']), async (req, res) => {
+// POST /api/coordinator/assigned-work - Coordinator creates a work assignment
+router.post('/assigned-work', requireRoles(['coordinator']), async (req, res) => {
   try {
     const { title, description, domain, assignedTo, dueDate, priority } = req.body;
 
@@ -325,7 +325,7 @@ router.post('/assigned-work', requireRoles(['faculty', 'coordinator']), async (r
       title: title.trim(),
       description: description.trim(),
       domain: domain || 'General Systems',
-      assignedByName: req.user.fullName || 'Faculty Member',
+      assignedByName: req.user.fullName || 'Student Coordinator',
       assignedByEmail: req.user.email,
       assignedTo: assignedTo || 'All Students',
       dueDate: dueDate || '',
@@ -369,7 +369,7 @@ router.put('/assigned-work/:id/status', async (req, res) => {
 });
 
 // DELETE /api/coordinator/assigned-work/:id - Delete assignment
-router.delete('/assigned-work/:id', requireRoles(['faculty', 'coordinator']), async (req, res) => {
+router.delete('/assigned-work/:id', requireRoles(['coordinator']), async (req, res) => {
   try {
     const { id } = req.params;
     await db.deleteAssignedWork(id);

@@ -36,7 +36,7 @@ interface ManagedUser {
   passwordHash?: string;
   password?: string;
   fullName: string;
-  role: 'coordinator' | 'faculty' | 'student';
+  role: 'coordinator' | 'student';
   department: string;
   avatarUrl: string;
   permissions?: {
@@ -103,7 +103,7 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
   }, [successMessage]);
 
   // New Account Form State
-  const [newRole, setNewRole] = useState<'faculty' | 'coordinator' | 'student'>('faculty');
+  const [newRole, setNewRole] = useState<'coordinator' | 'student'>('student');
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newFullName, setNewFullName] = useState('');
@@ -191,7 +191,7 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
           password: newPassword,
           fullName: newFullName.trim() || newEmail.split('@')[0],
           role: newRole,
-          department: newDepartment.trim() || (newRole === 'faculty' ? 'Computer Science & Engineering' : 'Engineering Core'),
+          department: newDepartment.trim() || (newRole === 'coordinator' ? 'Operations & Executive Core' : 'Engineering Core'),
         }),
       });
 
@@ -542,8 +542,6 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
                             className={`text-[9px] font-mono px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold ${
                               user.role === 'coordinator'
                                 ? 'bg-[#E50920]/20 text-[#E50920] border border-[#E50920]/40'
-                                : user.role === 'faculty'
-                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                                 : 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
                             }`}
                           >
@@ -881,7 +879,7 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
               <span>Issue New Institutional Account</span>
             </h3>
             <p className="text-xs text-zinc-400 font-mono">
-              Grant custom email credentials to Faculty Advisors, Student Coordinators, or Student Members.
+              Grant custom email credentials to Student Coordinators or Student Members.
             </p>
           </div>
 
@@ -890,9 +888,8 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
             <label className="text-xs font-mono uppercase tracking-wider text-zinc-300">
               Account Role / Clearance Level:
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
-                { id: 'faculty', label: 'Faculty Advisor', icon: Award, desc: 'Academic governance & lab authorization' },
                 { id: 'coordinator', label: 'Student Coordinator', icon: Shield, desc: 'Operations lead & system admin' },
                 { id: 'student', label: 'Student Member', icon: GraduationCap, desc: 'Standard member & sandbox access' },
               ].map((r) => (

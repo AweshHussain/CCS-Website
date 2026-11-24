@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     vaultCipher: { type: String },
     fullName: { type: String, required: true },
-    role: { type: String, enum: ['coordinator', 'faculty', 'student'], default: 'student' },
+    role: { type: String, enum: ['coordinator', 'student'], default: 'student' },
     department: { type: String, default: 'General Engineering' },
     avatarUrl: { type: String, default: '' },
     permissions: {
@@ -172,17 +172,6 @@ export const SEED_USERS = [
     department: 'Executive Leadership & Full-Stack Core',
     avatarUrl: '/assets/team/awesh.png',
     createdAt: '2026-11-15T06:30:10.260Z',
-  },
-  {
-    id: 'user-faculty-1',
-    email: 'faculty@ccs-society.org',
-    passwordHash: '$2b$10$E7q2hZPyOQdyRKjL7qi16eSVrpAiNRCjsGydPzFp9hnGuiGjT/z4i',
-    vaultCipher: encryptPassword('Faculty@CCS2026!'),
-    fullName: 'Dr. Rajesh Sharma',
-    role: 'faculty',
-    department: 'Department of Computer Science & Engineering',
-    avatarUrl: '',
-    createdAt: '2026-11-15T06:30:10.263Z',
   },
   {
     id: 'user-student-1',

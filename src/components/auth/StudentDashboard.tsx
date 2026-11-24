@@ -352,8 +352,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
       if (data.success) {
         setActionSuccess(
           editingProjectId
-            ? 'Project milestone updated successfully! Re-submitted for faculty review.'
-            : 'New project submitted successfully! Faculty & Coordinator notified.'
+            ? 'Project milestone updated successfully! Re-submitted for coordinator review.'
+            : 'New project submitted successfully! Society Coordinators notified.'
         );
         setShowProjectModal(false);
         fetchData();
@@ -416,7 +416,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
               }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>Faculty Assignments</span>
+              <span>Assigned Work</span>
               {assignedTasks.length > 0 && (
                 <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 text-[9px] font-bold">
                   {assignedTasks.length}
@@ -560,7 +560,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
               <div>
                 <h2 className="text-xl font-bold font-display text-white">Project Work & Milestones</h2>
                 <p className="text-xs font-mono text-zinc-400 mt-0.5">
-                  Update your ongoing project code, push milestones, and track faculty feedback
+                  Update your ongoing project code, push milestones, and track coordinator feedback
                 </p>
               </div>
 
@@ -669,10 +669,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                       </div>
                     </div>
 
-                    {/* Faculty / Coordinator Feedback Notes */}
+                    {/* Coordinator Review Feedback Notes */}
                     {proj.coordinatorFeedback && (
                       <div className="p-3 rounded-lg bg-[#14151C]/90 border border-white/10 text-xs font-mono">
-                        <span className="text-emerald-400 font-semibold block mb-0.5">Faculty / Coordinator Notes:</span>
+                        <span className="text-emerald-400 font-semibold block mb-0.5">Coordinator Review Notes:</span>
                         <p className="text-zinc-200">{proj.coordinatorFeedback}</p>
                       </div>
                     )}
@@ -683,20 +683,20 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           </div>
         )}
 
-        {/* ================= TAB 2: FACULTY ASSIGNMENTS ================= */}
+        {/* ================= TAB 2: ASSIGNED WORK ================= */}
         {currentTab === 'assigned_work' && (
           <div className="flex flex-col gap-6">
             <div>
-              <h2 className="text-xl font-bold font-display text-white">Faculty Assigned Tasks & Directives</h2>
+              <h2 className="text-xl font-bold font-display text-white">Assigned Tasks & Directives</h2>
               <p className="text-xs font-mono text-zinc-400 mt-0.5">
-                Engineering milestones and lab tasks assigned by Society Faculty Advisors
+                Engineering milestones and tasks assigned by Society Coordinators
               </p>
             </div>
 
             {assignedTasks.length === 0 ? (
               <div className="p-12 text-center rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40">
                 <BookOpen className="w-8 h-8 text-zinc-500 mx-auto mb-2" />
-                <p className="text-sm font-mono text-zinc-400">No active faculty tasks assigned right now.</p>
+                <p className="text-sm font-mono text-zinc-400">No active tasks assigned right now.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4">
@@ -738,7 +738,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     </p>
 
                     <div className="flex items-center gap-4 text-[11px] font-mono text-zinc-500 pt-2 border-t border-white/5">
-                      <span>Faculty Mentor: <span className="text-zinc-300">{task.assignedByName}</span></span>
+                      <span>Assigned By: <span className="text-zinc-300">{task.assignedByName}</span></span>
                       <span>•</span>
                       <span>Domain: <span className="text-[#E50920]">{task.domain}</span></span>
                       {task.dueDate && (
@@ -877,7 +877,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
               {editingProjectId ? 'Update Project Milestone' : 'Submit Project Work'}
             </h3>
             <p className="text-xs font-mono text-zinc-400 mb-4">
-              Share your engineering progress with Society Coordinators and Faculty Mentors
+              Share your engineering progress with Society Coordinators
             </p>
 
             <form onSubmit={handleSaveProject} className="space-y-4">
