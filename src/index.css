@@ -150,6 +150,29 @@ html.light .bg-white\/\[0\.04\],
 html.light .bg-white\/\[0\.02\] {
   background-color: rgba(0, 0, 0, 0.04) !important;
 }
+html.light .bg-\[\#0B0C10\],
+html.light .bg-\[\#0B0C10\]\/92,
+html.light .bg-\[\#0B0C10\]\/95,
+html.light .bg-\[\#0E0F14\],
+html.light .bg-\[\#14151C\],
+html.light .bg-\[\#161218\],
+html.light .bg-\[\#07070A\] {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #09090B !important;
+}
+html.light .bg-black\/60,
+html.light .bg-black\/50,
+html.light .bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+  color: #09090B !important;
+}
+html.light .border-white\/10,
+html.light .border-white\/5,
+html.light .border-white\/15,
+html.light .border-white\/20,
+html.light .border-white\/25 {
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
 html.light .glass-panel {
   background: var(--bg-card);
   border-color: var(--border-glass);

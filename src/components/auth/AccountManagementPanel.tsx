@@ -729,12 +729,18 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
               return (
                 <div
                   key={user.id}
-                  className={`p-4 sm:p-5 rounded-2xl border transition-all duration-300 flex flex-col gap-3 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 ${
-                    isMe
-                      ? 'border-[#E50920]/50 bg-gradient-to-r from-[#E50920]/10 via-[#0B0C10]/95 to-[#0B0C10]/95'
+                  className={`p-4 sm:p-5 rounded-2xl border transition-all duration-300 flex flex-col gap-3 backdrop-blur-xl shadow-xl ${
+                    theme === 'light'
+                      ? isMe
+                        ? 'bg-rose-50/70 border-[#E50920] shadow-md shadow-[#E50920]/15'
+                        : isExpanded
+                        ? 'bg-white border-black/25 shadow-xl'
+                        : 'bg-white border-black/10 hover:border-black/20 shadow-black/5'
+                      : isMe
+                      ? 'bg-[#0B0C10]/92 border-[#E50920]/50 bg-gradient-to-r from-[#E50920]/10 via-[#0B0C10]/95 to-[#0B0C10]/95 shadow-black/40'
                       : isExpanded
-                      ? 'border-white/25 shadow-2xl'
-                      : 'border-white/10 hover:border-white/20'
+                      ? 'bg-[#0B0C10]/92 border-white/25 shadow-2xl shadow-black/40'
+                      : 'bg-[#0B0C10]/92 border-white/10 hover:border-white/20 shadow-black/40'
                   }`}
                 >
                   {/* Top Row: User Summary & Primary Actions */}
@@ -841,7 +847,11 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
                       {/* 1. Edit Name & Photo Button */}
                       <button
                         onClick={() => handleOpenEdit(user)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-zinc-200 hover:text-white transition-all cursor-pointer"
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-mono transition-all cursor-pointer ${
+                          theme === 'light'
+                            ? 'bg-black/5 hover:bg-black/10 border-black/10 text-zinc-700 hover:text-black'
+                            : 'bg-white/5 hover:bg-white/10 border-white/10 text-zinc-200 hover:text-white'
+                        }`}
                         title="Edit Name and Photo"
                       >
                         <Edit3 className="w-3.5 h-3.5 text-[#E50920]" />
@@ -854,6 +864,8 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono transition-all cursor-pointer border ${
                           isExpanded
                             ? 'bg-[#E50920] text-white border-[#E50920] font-semibold shadow-md shadow-[#E50920]/20'
+                            : theme === 'light'
+                            ? 'bg-black/5 hover:bg-black/10 text-zinc-700 hover:text-black border-black/10'
                             : 'bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border-white/10'
                         }`}
                         title="Share Access & Permissions"
@@ -868,22 +880,30 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
                       </button>
 
                       {/* 3. Password Box with Eye Toggle */}
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 border border-white/15 font-mono text-xs">
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-mono text-xs ${
+                        theme === 'light'
+                          ? 'bg-black/5 border-black/10'
+                          : 'bg-black/60 border-white/15'
+                      }`}>
                         <span
-                          className="text-emerald-400 text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 font-semibold"
+                          className="text-emerald-500 text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 font-semibold"
                           title="Encrypted in DB; Decrypted strictly for Lead Coordinator"
                         >
                           {user.password ? 'VAULT' : 'HASH'}
                         </span>
                         <span
-                          className="text-zinc-200 font-mono text-[11px] truncate max-w-[100px] sm:max-w-[130px]"
+                          className={`font-mono text-[11px] truncate max-w-[100px] sm:max-w-[130px] ${
+                            theme === 'light' ? 'text-zinc-800' : 'text-zinc-200'
+                          }`}
                           title={user.password || user.passwordHash}
                         >
                           {isRevealed ? (user.password || user.passwordHash) : '••••••••'}
                         </span>
                         <button
                           onClick={() => togglePasswordReveal(user.id)}
-                          className="ml-1 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                          className={`ml-1 transition-colors cursor-pointer ${
+                            theme === 'light' ? 'text-zinc-500 hover:text-black' : 'text-zinc-400 hover:text-white'
+                          }`}
                           title={isRevealed ? 'Hide Password' : 'Show Password'}
                         >
                           {isRevealed ? <EyeOff className="w-3.5 h-3.5 text-[#E50920]" /> : <Eye className="w-3.5 h-3.5" />}
@@ -893,7 +913,11 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
                       {/* 4. Copy Credential Button */}
                       <button
                         onClick={() => copyCredentials(user)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-zinc-300 hover:text-white transition-all cursor-pointer"
+                        className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border text-xs font-mono transition-all cursor-pointer ${
+                          theme === 'light'
+                            ? 'bg-black/5 hover:bg-black/10 border-black/10 text-zinc-700 hover:text-black'
+                            : 'bg-white/5 hover:bg-white/10 border-white/10 text-zinc-300 hover:text-white'
+                        }`}
                         title="Copy Login Credentials"
                       >
                         {copiedId === user.id ? (

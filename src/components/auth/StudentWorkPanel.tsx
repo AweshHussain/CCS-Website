@@ -44,9 +44,10 @@ interface StudentWorkPanelProps {
     role?: string;
   } | null;
   onCountUpdate?: (pendingCount: number) => void;
+  theme?: 'dark' | 'light';
 }
 
-export const StudentWorkPanel: React.FC<StudentWorkPanelProps> = ({ token, currentUser, onCountUpdate }) => {
+export const StudentWorkPanel: React.FC<StudentWorkPanelProps> = ({ token, currentUser, onCountUpdate, theme = 'dark' }) => {
   const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
   const [loading, setLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);

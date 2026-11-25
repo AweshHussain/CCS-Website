@@ -65,6 +65,7 @@ interface CoordinatorTaskDirectivesPanelProps {
     department?: string;
   };
   onCountUpdate?: (count: number) => void;
+  theme?: 'dark' | 'light';
 }
 
 const PRESET_DOMAINS = [
@@ -81,6 +82,7 @@ export const CoordinatorTaskDirectivesPanel: React.FC<CoordinatorTaskDirectivesP
   token,
   currentUser,
   onCountUpdate,
+  theme = 'dark',
 }) => {
   const [tasks, setTasks] = useState<AssignedTaskDirective[]>([]);
   const [loading, setLoading] = useState(false);
@@ -405,35 +407,47 @@ export const CoordinatorTaskDirectivesPanel: React.FC<CoordinatorTaskDirectivesP
 
       {/* ================= STATS TELEMETRY ================= */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-lg shadow-black/60">
+        <div className={`p-4 rounded-xl border backdrop-blur-2xl shadow-lg ${
+          theme === 'light'
+            ? 'bg-white/95 border-black/10 shadow-black/5'
+            : 'bg-[#0B0C10] border-white/10 shadow-black/60'
+        }`}>
           <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-1.5">
             <span>Active Directives</span>
             <Layers className="w-4 h-4 text-[#E50920]" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-display text-white">{activeDirectivesCount}</span>
+            <span className={`text-2xl font-bold font-display ${theme === 'light' ? 'text-zinc-900' : 'text-white'}`}>{activeDirectivesCount}</span>
             <span className="text-xs font-mono text-zinc-500">of {tasks.length} total</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-lg shadow-black/60">
+        <div className={`p-4 rounded-xl border backdrop-blur-2xl shadow-lg ${
+          theme === 'light'
+            ? 'bg-white/95 border-black/10 shadow-black/5'
+            : 'bg-[#0B0C10] border-white/10 shadow-black/60'
+        }`}>
           <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-1.5">
             <span>Total Claimed Slots</span>
             <Users className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-display text-white">{totalClaimsCount}</span>
-            <span className="text-xs font-mono text-emerald-400">across active queues</span>
+            <span className={`text-2xl font-bold font-display ${theme === 'light' ? 'text-zinc-900' : 'text-white'}`}>{totalClaimsCount}</span>
+            <span className={`text-xs font-mono ${theme === 'light' ? 'text-emerald-600 font-semibold' : 'text-emerald-400'}`}>across active queues</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-lg shadow-black/60">
+        <div className={`p-4 rounded-xl border backdrop-blur-2xl shadow-lg ${
+          theme === 'light'
+            ? 'bg-white/95 border-black/10 shadow-black/5'
+            : 'bg-[#0B0C10] border-white/10 shadow-black/60'
+        }`}>
           <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-1.5">
             <span>Queue Status</span>
             <ListOrdered className="w-4 h-4 text-amber-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-base font-bold font-mono text-amber-300">Queue Active</span>
+            <span className={`text-base font-bold font-mono ${theme === 'light' ? 'text-amber-600' : 'text-amber-300'}`}>Queue Active</span>
             <span className="text-xs font-mono text-zinc-500">Automated Dispatch</span>
           </div>
         </div>
@@ -473,20 +487,28 @@ export const CoordinatorTaskDirectivesPanel: React.FC<CoordinatorTaskDirectivesP
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search directives, domains, or claimed students..."
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#0B0C10] border border-white/10 text-xs font-mono text-white placeholder-zinc-500 focus:outline-none focus:border-[#E50920] transition-colors"
+            className={`w-full pl-9 pr-4 py-2 rounded-xl border text-xs font-mono focus:outline-none focus:border-[#E50920] transition-colors ${
+              theme === 'light'
+                ? 'bg-white border-black/15 text-zinc-900 placeholder-zinc-400'
+                : 'bg-[#0B0C10] border-white/10 text-white placeholder-zinc-500'
+            }`}
           />
         </div>
 
         <div className="flex items-center gap-2">
           <Filter className="w-3.5 h-3.5 text-zinc-500" />
-          <span className="text-xs font-mono text-zinc-400">Filter:</span>
+          <span className={`text-xs font-mono ${theme === 'light' ? 'text-zinc-600' : 'text-zinc-400'}`}>Filter:</span>
           {(['all', 'active', 'closed'] as const).map((st) => (
             <button
               key={st}
               onClick={() => setFilterStatus(st)}
               className={`px-3 py-1 rounded-lg text-xs font-mono uppercase transition-colors cursor-pointer ${
                 filterStatus === st
-                  ? 'bg-white/15 text-white font-semibold border border-white/20'
+                  ? theme === 'light'
+                    ? 'bg-black/10 text-zinc-900 font-semibold border border-black/15 shadow-sm'
+                    : 'bg-white/15 text-white font-semibold border border-white/20'
+                  : theme === 'light'
+                  ? 'bg-black/5 text-zinc-600 hover:text-black hover:bg-black/10'
                   : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10'
               }`}
             >
@@ -498,10 +520,14 @@ export const CoordinatorTaskDirectivesPanel: React.FC<CoordinatorTaskDirectivesP
 
       {/* ================= DIRECTIVES LIST ================= */}
       {filteredTasks.length === 0 ? (
-        <div className="p-12 text-center rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60">
-          <ListOrdered className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
-          <p className="text-sm font-mono text-zinc-300">No task directives found.</p>
-          <p className="text-xs font-mono text-zinc-500 mt-1">
+        <div className={`p-12 text-center rounded-xl border backdrop-blur-2xl shadow-xl ${
+          theme === 'light'
+            ? 'bg-white/95 border-black/10 shadow-black/5'
+            : 'bg-[#0B0C10] border-white/10 shadow-black/60'
+        }`}>
+          <ListOrdered className={`w-10 h-10 mx-auto mb-3 ${theme === 'light' ? 'text-zinc-400' : 'text-zinc-600'}`} />
+          <p className={`text-sm font-mono ${theme === 'light' ? 'text-zinc-800' : 'text-zinc-300'}`}>No task directives found.</p>
+          <p className={`text-xs font-mono mt-1 ${theme === 'light' ? 'text-zinc-500' : 'text-zinc-500'}`}>
             Click &ldquo;Issue Task Directive&rdquo; above to publish your first open-to-all milestone.
           </p>
         </div>
@@ -519,7 +545,11 @@ export const CoordinatorTaskDirectivesPanel: React.FC<CoordinatorTaskDirectivesP
                 key={task.id}
                 className={`p-5 rounded-xl border transition-all ${
                   task.status === 'active'
-                    ? 'border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 hover:border-white/20'
+                    ? theme === 'light'
+                      ? 'bg-white/95 border-black/10 shadow-lg shadow-black/5 hover:border-black/20'
+                      : 'border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 hover:border-white/20'
+                    : theme === 'light'
+                    ? 'border-black/5 bg-zinc-50 opacity-90'
                     : 'border-white/5 bg-[#080808] opacity-85'
                 }`}
               >

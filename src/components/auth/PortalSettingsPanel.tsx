@@ -45,6 +45,7 @@ interface PortalSettingsPanelProps {
   };
   onOpenChangePassword: () => void;
   onOpenChangeEmail: () => void;
+  theme?: 'dark' | 'light';
 }
 
 export const PortalSettingsPanel: React.FC<PortalSettingsPanelProps> = ({
@@ -52,6 +53,7 @@ export const PortalSettingsPanel: React.FC<PortalSettingsPanelProps> = ({
   currentUser,
   onOpenChangePassword,
   onOpenChangeEmail,
+  theme = 'dark',
 }) => {
   const [settings, setSettings] = useState<PortalSettings>({
     societyName: 'Code & Compute Society (CCS)',

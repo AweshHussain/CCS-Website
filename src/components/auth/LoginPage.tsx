@@ -370,6 +370,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
               token={authToken!}
               currentUser={currentUser}
               onCountUpdate={(cnt) => setPendingSubmissionsCount(cnt)}
+              theme={theme}
             />
           )}
 
@@ -378,6 +379,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
               token={authToken!}
               currentUser={currentUser}
               onCountUpdate={(cnt) => setActiveDirectivesCount(cnt)}
+              theme={theme}
             />
           )}
 
@@ -400,6 +402,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
               currentUser={currentUser}
               onOpenChangePassword={() => setShowChangePasswordModal(true)}
               onOpenChangeEmail={() => setShowChangeEmailModal(true)}
+              theme={theme}
             />
           )}
         </main>
