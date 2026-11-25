@@ -667,28 +667,42 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             <div className="relative" ref={profileRef}>
               <button
                 onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-1.5 rounded-full border border-white/10 hover:border-[#E50920]/40 bg-white/[0.03] transition-all cursor-pointer"
+                className={`flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-1.5 rounded-full border transition-all cursor-pointer ${
+                  theme === 'light'
+                    ? 'border-black/10 hover:border-[#E50920]/40 bg-black/[0.04]'
+                    : 'border-white/10 hover:border-[#E50920]/40 bg-white/[0.03]'
+                }`}
               >
               <div className="w-7 h-7 rounded-full bg-[#E50920]/20 text-[#E50920] border border-[#E50920]/40 flex items-center justify-center font-bold text-xs">
                 {currentUser.fullName?.charAt(0) || 'S'}
               </div>
               <div className="hidden sm:flex flex-col text-left">
-                <span className="text-xs font-medium text-white truncate max-w-[120px]">
+                <span className={`text-xs font-medium truncate max-w-[120px] ${
+                  theme === 'light' ? 'text-zinc-900' : 'text-white'
+                }`}>
                   {currentUser.fullName}
                 </span>
                 <span className="text-[10px] font-mono text-[#E50920]">
                   STUDENT DEVELOPER
                 </span>
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+              <ChevronDown className={`w-3.5 h-3.5 ${theme === 'light' ? 'text-zinc-600' : 'text-zinc-400'}`} />
             </button>
 
             {profileOpen && (
-              <div className="absolute top-12 right-0 w-72 rounded-2xl border border-white/15 bg-[#0F0F12] shadow-2xl p-4 z-50 animate-in fade-in duration-150">
-                <div className="pb-3 border-b border-white/10">
-                  <h4 className="text-sm font-bold text-white truncate">{currentUser.fullName}</h4>
+              <div className={`absolute top-12 right-0 w-72 rounded-2xl border shadow-2xl p-4 z-50 animate-in fade-in duration-150 ${
+                theme === 'light'
+                  ? 'bg-white border-black/10 shadow-xl shadow-black/10'
+                  : 'bg-[#0F0F12] border-white/15 shadow-2xl'
+              }`}>
+                <div className={`pb-3 border-b ${theme === 'light' ? 'border-black/10' : 'border-white/10'}`}>
+                  <h4 className={`text-sm font-bold truncate ${theme === 'light' ? 'text-zinc-900' : 'text-white'}`}>
+                    {currentUser.fullName}
+                  </h4>
                   <p className="text-[11px] font-mono text-[#E50920]">Student Member</p>
-                  <p className="text-[10px] font-mono text-zinc-500 truncate">{currentUser.email}</p>
+                  <p className={`text-[10px] font-mono truncate ${theme === 'light' ? 'text-zinc-600' : 'text-zinc-500'}`}>
+                    {currentUser.email}
+                  </p>
                 </div>
 
                 <div className="py-2 flex flex-col gap-1">
@@ -697,13 +711,17 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                       setProfileOpen(false);
                       setCurrentTab('profile');
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-mono text-zinc-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer text-left"
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-mono transition-colors cursor-pointer text-left ${
+                      theme === 'light'
+                        ? 'text-zinc-700 hover:text-black hover:bg-black/5'
+                        : 'text-zinc-300 hover:text-white hover:bg-white/5'
+                    }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <User className="w-3.5 h-3.5 text-[#E50920]" />
                       <span>My Profile & Session</span>
                     </div>
-                    <span className="text-[10px] font-mono text-amber-400">
+                    <span className="text-[10px] font-mono text-amber-500 font-semibold">
                       {session.formattedTime}
                     </span>
                   </button>
@@ -714,13 +732,17 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                         setProfileOpen(false);
                         setCurrentTab('announcements');
                       }}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-mono text-amber-300 hover:text-white hover:bg-amber-500/10 transition-colors cursor-pointer text-left"
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-mono transition-colors cursor-pointer text-left ${
+                        theme === 'light'
+                          ? 'text-amber-700 hover:text-amber-900 hover:bg-amber-50'
+                          : 'text-amber-300 hover:text-white hover:bg-amber-500/10'
+                      }`}
                     >
                       <div className="flex items-center gap-2.5">
-                        <Radio className="w-3.5 h-3.5 text-amber-400" />
+                        <Radio className="w-3.5 h-3.5 text-amber-500" />
                         <span>Public Announcements</span>
                       </div>
-                      <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold">
+                      <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-700 font-bold">
                         ACTIVE
                       </span>
                     </button>
@@ -731,20 +753,28 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                       setProfileOpen(false);
                       onBackToHome();
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono text-zinc-300 hover:text-white hover:bg-white/5 transition-colors cursor-pointer text-left"
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono transition-colors cursor-pointer text-left ${
+                      theme === 'light'
+                        ? 'text-zinc-700 hover:text-black hover:bg-black/5'
+                        : 'text-zinc-300 hover:text-white hover:bg-white/5'
+                    }`}
                   >
-                    <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
+                    <ExternalLink className={`w-3.5 h-3.5 ${theme === 'light' ? 'text-zinc-500' : 'text-zinc-400'}`} />
                     <span>View Public Site</span>
                   </button>
                 </div>
 
-                <div className="pt-2 border-t border-white/10">
+                <div className={`pt-2 border-t ${theme === 'light' ? 'border-black/10' : 'border-white/10'}`}>
                   <button
                     onClick={() => {
                       setProfileOpen(false);
                       handleLogout();
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono text-rose-400 hover:text-white hover:bg-rose-500/10 transition-colors cursor-pointer text-left"
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono transition-colors cursor-pointer text-left ${
+                      theme === 'light'
+                        ? 'text-rose-600 hover:text-rose-800 hover:bg-rose-50'
+                        : 'text-rose-400 hover:text-white hover:bg-rose-500/10'
+                    }`}
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     <span>Sign Out</span>

@@ -171,7 +171,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   }}
                   className={`group relative flex items-center gap-2 sm:gap-2.5 px-3 sm:px-4 py-1.5 rounded-full transition-all duration-300 shadow-md cursor-pointer border ${
                     theme === 'light'
-                      ? 'bg-black/5 hover:bg-black/10 border-black/15 text-zinc-900 shadow-sm'
+                      ? 'bg-white/10 hover:bg-white/20 border-white/20 text-white shadow-sm'
                       : 'bg-white/[0.06] hover:bg-white/[0.12] border-white/15 text-white shadow-[0_0_15px_rgba(229,9,32,0.18)] hover:border-[#E50920]/60'
                   }`}
                   title={`Logged in as ${currentUser.fullName} (${currentUser.role.toUpperCase()}) • Open Workspace`}
@@ -185,7 +185,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="text-[10px] font-mono font-bold uppercase leading-none">
+                      <span className="text-[10px] font-mono font-bold uppercase leading-none text-white">
                         {currentUser.fullName ? currentUser.fullName.charAt(0) : 'U'}
                       </span>
                     )}
@@ -193,12 +193,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
 
                   {/* Person Display Name */}
-                  <span className="font-display font-bold text-xs sm:text-sm tracking-tight max-w-[85px] sm:max-w-[130px] md:max-w-[160px] truncate">
+                  <span className="font-display font-bold text-xs sm:text-sm tracking-tight max-w-[85px] sm:max-w-[130px] md:max-w-[160px] truncate text-white">
                     {currentUser.fullName}
                   </span>
 
                   {/* Role Badge */}
-                  <span className="hidden lg:inline-block text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-[#E50920]/15 text-[#E50920] border border-[#E50920]/30 font-semibold">
+                  <span className="hidden lg:inline-block text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-[#E50920]/20 text-[#FF4D5E] border border-[#E50920]/40 font-semibold tracking-wider">
                     {currentUser.role}
                   </span>
 
@@ -214,7 +214,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     }}
                     className={`p-2 rounded-full transition-colors cursor-pointer border ${
                       theme === 'light'
-                        ? 'bg-black/5 hover:bg-red-50 border-black/10 text-zinc-500 hover:text-red-600'
+                        ? 'bg-white/10 hover:bg-red-500/20 border-white/20 text-zinc-300 hover:text-red-400'
                         : 'glass-panel border-white/10 hover:border-red-500/40 text-zinc-400 hover:text-red-400'
                     }`}
                     title="Sign Out"
