@@ -784,7 +784,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
             {/* Project List */}
             {displayProjects.length === 0 ? (
-              <div className="p-12 text-center rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40">
+              <div className="p-12 text-center rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60">
                 <FolderGit2 className="w-8 h-8 text-zinc-500 mx-auto mb-2" />
                 <p className="text-sm font-mono text-zinc-400 mb-3">No project updates submitted yet.</p>
                 <button
@@ -799,7 +799,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 {displayProjects.map((proj) => (
                   <div
                     key={proj.id}
-                    className="p-5 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 hover:border-white/20 transition-all flex flex-col gap-4"
+                    className="p-5 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 hover:border-white/20 transition-all flex flex-col gap-4"
                   >
                     {/* Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -835,7 +835,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     </div>
 
                     {/* Description */}
-                    <div className="p-3.5 rounded-lg bg-black/40 border border-white/5 text-xs font-mono text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                    <div className="p-3.5 rounded-lg bg-[#07070A] border border-white/10 text-xs font-mono text-zinc-300 leading-relaxed whitespace-pre-wrap">
                       {proj.description}
                     </div>
 
@@ -924,7 +924,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             </div>
 
             {assignedTasks.length === 0 ? (
-              <div className="p-12 text-center rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40">
+              <div className="p-12 text-center rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60">
                 <BookOpen className="w-8 h-8 text-zinc-500 mx-auto mb-2" />
                 <p className="text-sm font-mono text-zinc-400">No active task directives published right now.</p>
               </div>
@@ -946,7 +946,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                   return (
                     <div
                       key={task.id}
-                      className="p-5 sm:p-6 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 flex flex-col gap-4 hover:border-white/20 transition-all"
+                      className="p-5 sm:p-6 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 flex flex-col gap-4 hover:border-white/20 transition-all"
                     >
                       {/* Top Row: Title, Badges, and Action Buttons */}
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -1203,7 +1203,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             {/* Broadcast Creation Form */}
             <form
               onSubmit={handlePostAnnouncement}
-              className="p-5 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 flex flex-col gap-3"
+              className="p-5 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 flex flex-col gap-3"
             >
               <label className="text-xs font-mono text-zinc-300 font-bold uppercase flex items-center gap-2">
                 <Send className="w-3.5 h-3.5 text-[#E50920]" />
@@ -1278,7 +1278,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
               {announcements.map((ann, idx) => (
                 <div
                   key={ann.id || idx}
-                  className="p-4 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 flex flex-col gap-2"
+                  className="p-4 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 flex flex-col gap-2"
                 >
                   <div className="flex items-center justify-between text-[11px] font-mono">
                     <div className="flex items-center gap-2 flex-wrap">

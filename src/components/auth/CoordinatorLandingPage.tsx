@@ -109,7 +109,7 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
         {/* Card 1: Student Work */}
         <div
           onClick={() => onNavigate('student_work')}
-          className="p-5 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 hover:border-white/20 transition-all cursor-pointer group"
+          className="p-5 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 hover:border-white/20 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-2">
             <span>Student Projects</span>
@@ -132,7 +132,7 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
         {/* Card 2: Task Directives */}
         <div
           onClick={() => onNavigate('task_directives')}
-          className="p-5 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 hover:border-white/20 transition-all cursor-pointer group"
+          className="p-5 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 hover:border-white/20 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-2">
             <span>Task Directives</span>
@@ -151,7 +151,7 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
         {/* Card 3: Accounts */}
         <div
           onClick={() => onNavigate('accounts')}
-          className="p-5 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 hover:border-white/20 transition-all cursor-pointer group"
+          className="p-5 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 hover:border-white/20 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-2">
             <span>Registered Accounts</span>
@@ -168,7 +168,7 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
 
       {/* ================= OPTIONAL BANNER ROW ================= */}
       {settings?.isBannerActive && (
-        <div className="px-4 py-3 rounded-xl bg-[#0B0C10]/92 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/30 flex items-center justify-between gap-3">
+        <div className="px-4 py-3 rounded-xl bg-[#0B0C10] backdrop-blur-2xl border border-white/10 shadow-lg shadow-black/50 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <Radio className="w-3.5 h-3.5 text-[#E50920] shrink-0" />
             <span className="text-xs font-mono text-zinc-300 truncate">
@@ -187,7 +187,7 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
       {/* ================= TWO CLEAN PANELS ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Left: Student Updates */}
-        <div className="p-5 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 flex flex-col gap-3">
+        <div className="p-5 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 flex flex-col gap-3">
           <div className="flex items-center justify-between pb-2 border-b border-white/10">
             <h3 className="text-sm font-semibold text-white font-display">
               Recent Student Submissions
@@ -207,7 +207,7 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
                 <div
                   key={item.id}
                   onClick={() => onNavigate('student_work')}
-                  className="p-3.5 rounded-lg bg-[#14151C]/80 border border-white/10 hover:border-white/20 transition-all flex flex-col gap-1.5 cursor-pointer"
+                  className="p-3.5 rounded-lg bg-[#14151C] border border-white/10 hover:border-white/20 transition-all flex flex-col gap-1.5 cursor-pointer"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -235,7 +235,7 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
         </div>
 
         {/* Right: Quick Action Controls */}
-        <div className="p-5 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 flex flex-col gap-3">
+        <div className="p-5 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 flex flex-col gap-3">
           <div className="flex items-center justify-between pb-2 border-b border-white/10">
             <h3 className="text-sm font-semibold text-white font-display">
               Quick Operations
@@ -246,7 +246,7 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
           <div className="flex flex-col gap-2.5">
             <button
               onClick={() => onNavigate('student_work')}
-              className="p-3.5 rounded-lg bg-[#14151C]/80 border border-white/10 hover:border-[#E50920]/40 transition-all flex items-center justify-between cursor-pointer text-left group"
+              className="p-3.5 rounded-lg bg-[#14151C] border border-white/10 hover:border-[#E50920]/40 transition-all flex items-center justify-between cursor-pointer text-left group"
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-[#E50920]/10 flex items-center justify-center text-[#E50920]">

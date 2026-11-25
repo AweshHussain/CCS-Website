@@ -8,8 +8,8 @@
   --font-sans: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
   
   --bg-primary: #080808;
-  --bg-card: rgba(12, 13, 18, 0.94);
-  --bg-card-elevated: rgba(15, 16, 22, 0.98);
+  --bg-card: #0C0D12;
+  --bg-card-elevated: #0F1016;
   --border-glass: rgba(255, 255, 255, 0.08);
   --border-glass-elevated: rgba(255, 255, 255, 0.12);
   --text-main: #FFFFFF;

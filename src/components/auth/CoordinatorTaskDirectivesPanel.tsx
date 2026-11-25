@@ -405,7 +405,7 @@ export const CoordinatorTaskDirectivesPanel: React.FC<CoordinatorTaskDirectivesP
 
       {/* ================= STATS TELEMETRY ================= */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-lg shadow-black/40">
+        <div className="p-4 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-lg shadow-black/60">
           <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-1.5">
             <span>Active Directives</span>
             <Layers className="w-4 h-4 text-[#E50920]" />
@@ -416,7 +416,7 @@ export const CoordinatorTaskDirectivesPanel: React.FC<CoordinatorTaskDirectivesP
           </div>
         </div>
 
-        <div className="p-4 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-lg shadow-black/40">
+        <div className="p-4 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-lg shadow-black/60">
           <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-1.5">
             <span>Total Claimed Slots</span>
             <Users className="w-4 h-4 text-emerald-400" />
@@ -427,7 +427,7 @@ export const CoordinatorTaskDirectivesPanel: React.FC<CoordinatorTaskDirectivesP
           </div>
         </div>
 
-        <div className="p-4 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-lg shadow-black/40">
+        <div className="p-4 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-lg shadow-black/60">
           <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-1.5">
             <span>Queue Status</span>
             <ListOrdered className="w-4 h-4 text-amber-400" />
@@ -498,7 +498,7 @@ export const CoordinatorTaskDirectivesPanel: React.FC<CoordinatorTaskDirectivesP
 
       {/* ================= DIRECTIVES LIST ================= */}
       {filteredTasks.length === 0 ? (
-        <div className="p-12 text-center rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40">
+        <div className="p-12 text-center rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60">
           <ListOrdered className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
           <p className="text-sm font-mono text-zinc-300">No task directives found.</p>
           <p className="text-xs font-mono text-zinc-500 mt-1">
@@ -519,8 +519,8 @@ export const CoordinatorTaskDirectivesPanel: React.FC<CoordinatorTaskDirectivesP
                 key={task.id}
                 className={`p-5 rounded-xl border transition-all ${
                   task.status === 'active'
-                    ? 'border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 hover:border-white/20'
-                    : 'border-white/5 bg-[#080808]/80 opacity-75'
+                    ? 'border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 hover:border-white/20'
+                    : 'border-white/5 bg-[#080808] opacity-85'
                 }`}
               >
                 {/* Header row */}

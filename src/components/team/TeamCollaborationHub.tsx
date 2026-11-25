@@ -534,10 +534,10 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
             return (
               <div
                 key={teammate.id}
-                className={`p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 ${
+                className={`p-4 rounded-xl border backdrop-blur-2xl transition-all flex flex-col justify-between gap-3 shadow-xl ${
                   isMe
-                    ? 'border-[#E50920]/40 bg-[#161318]/90 shadow-md shadow-[#E50920]/10'
-                    : 'border-white/10 bg-[#0B0C10]/90 hover:border-white/20'
+                    ? 'border-[#E50920]/60 bg-[#161218] shadow-md shadow-[#E50920]/15'
+                    : 'border-white/10 bg-[#0E0F14] hover:border-white/25 shadow-black/50'
                 }`}
               >
                 {/* Top Profile */}
@@ -593,7 +593,7 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                 </div>
 
                 {/* Latest Project Work */}
-                <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 text-[11px] font-mono">
+                <div className="p-2.5 rounded-lg bg-[#07070A] border border-white/10 text-[11px] font-mono">
                   <span className="text-zinc-500 block text-[9px] uppercase tracking-wider mb-0.5">
                     Current Milestone:
                   </span>
@@ -633,7 +633,7 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
           {Array.from({ length: Math.max(0, 4 - teammates.length) }).map((_, idx) => (
             <div
               key={`empty-${idx}`}
-              className="p-4 rounded-xl border border-dashed border-white/10 bg-white/[0.01] flex flex-col items-center justify-center gap-2 text-center min-h-[140px]"
+              className="p-4 rounded-xl border border-dashed border-white/10 bg-[#0E0F14] backdrop-blur-xl flex flex-col items-center justify-center gap-2 text-center min-h-[140px]"
             >
               <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-600">
                 <Users className="w-4 h-4" />
