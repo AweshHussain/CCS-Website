@@ -129,16 +129,27 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
     <header className="w-full sticky top-0 z-40 bg-[#080808]/95 backdrop-blur-md border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* ================= LEFT: Brand ================= */}
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#E50920] flex items-center justify-center text-white shadow-md shadow-[#E50920]/30">
-            <Shield className="w-4 h-4" />
+        <button
+          onClick={onBackToHome}
+          className="flex items-center gap-3 text-left group cursor-pointer focus:outline-none"
+          title="Go to CCS Home"
+        >
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[#E50920]/25 via-black/80 to-black border border-[#E50920]/40 flex items-center justify-center p-1.5 shadow-md shadow-[#E50920]/25 group-hover:border-[#E50920] group-hover:scale-105 transition-all shrink-0">
+            <img
+              src="/ccs_emblem_white.png"
+              alt="CCS Emblem"
+              className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(229,9,32,0.6)] group-hover:brightness-125 transition-all"
+            />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="font-display font-bold text-white text-sm tracking-wide">
-              CCS <span className="text-[#E50920]">Coordinator</span>
+          <div>
+            <span className="font-display font-bold text-white text-xs sm:text-sm tracking-wide block group-hover:text-zinc-100 transition-colors">
+              Code &amp; Compute Society
+            </span>
+            <span className="block text-[10px] font-mono text-[#E50920] group-hover:brightness-125 transition-all">
+              Coordinator Portal
             </span>
           </div>
-        </div>
+        </button>
 
         {/* ================= CENTER: Nav Links ================= */}
         <nav className="hidden md:flex items-center gap-1">
