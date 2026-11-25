@@ -538,12 +538,16 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   };
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col bg-[#080808] text-white">
+    <div className={`relative min-h-screen w-full flex flex-col transition-colors duration-300 ${
+      theme === 'light' ? 'bg-[#F8F9FA] text-zinc-900' : 'bg-[#080808] text-white'
+    }`}>
       {/* 3D Floating CCS Logo & Ambient Lighting in Background */}
-      <DashboardBackground role="student" />
+      <DashboardBackground role="student" theme={theme} />
 
       {/* ================= TOP NAVBAR ================= */}
-      <header className="w-full sticky top-0 z-40 bg-[#080808]/95 backdrop-blur-md border-b border-white/10 relative">
+      <header className={`w-full sticky top-0 z-40 backdrop-blur-md border-b transition-colors duration-300 relative ${
+        theme === 'light' ? 'bg-[#FFFFFF]/95 border-black/10' : 'bg-[#080808]/95 border-white/10'
+      }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           {/* Brand */}
           <button
@@ -559,7 +563,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
               />
             </div>
             <div>
-              <span className="font-display font-bold text-white text-xs sm:text-sm tracking-wide block group-hover:text-zinc-100 transition-colors">
+              <span className={`font-display font-bold text-xs sm:text-sm tracking-wide block transition-colors ${
+                theme === 'light' ? 'text-zinc-900 group-hover:text-black' : 'text-white group-hover:text-zinc-100'
+              }`}>
                 Code &amp; Compute Society
               </span>
               <span className="block text-[10px] font-mono text-zinc-400 group-hover:text-[#E50920] transition-colors">
@@ -587,13 +593,19 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
               onClick={() => setCurrentTab('my_projects')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer shrink-0 ${
                 currentTab === 'my_projects'
-                  ? 'bg-white/10 text-white font-semibold'
+                  ? theme === 'light'
+                    ? 'bg-black/10 text-zinc-900 font-semibold border border-black/15 shadow-sm'
+                    : 'bg-white/10 text-white font-semibold'
+                  : theme === 'light'
+                  ? 'text-zinc-600 hover:text-black hover:bg-black/5'
                   : 'text-zinc-400 hover:text-white hover:bg-white/5'
               }`}
             >
               <FolderGit2 className="w-3.5 h-3.5 text-[#E50920]" />
               <span>My Projects & Work</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-white/10 text-zinc-300 text-[9px]">
+              <span className={`px-1.5 py-0.2 rounded-full text-[9px] ${
+                theme === 'light' ? 'bg-black/10 text-zinc-700' : 'bg-white/10 text-zinc-300'
+              }`}>
                 {displayProjects.length}
               </span>
             </button>
@@ -602,7 +614,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
               onClick={() => setCurrentTab('assigned_work')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer shrink-0 ${
                 currentTab === 'assigned_work'
-                  ? 'bg-white/10 text-white font-semibold'
+                  ? theme === 'light'
+                    ? 'bg-black/10 text-zinc-900 font-semibold border border-black/15 shadow-sm'
+                    : 'bg-white/10 text-white font-semibold'
+                  : theme === 'light'
+                  ? 'text-zinc-600 hover:text-black hover:bg-black/5'
                   : 'text-zinc-400 hover:text-white hover:bg-white/5'
               }`}
             >

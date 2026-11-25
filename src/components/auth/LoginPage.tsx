@@ -325,9 +325,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
   // 1. Dedicated Coordinator Dashboard Layout
   if (authStatus === 'dashboard' && currentUser && currentUser.role === 'coordinator') {
     return (
-      <div className="relative min-h-screen w-full flex flex-col bg-[#080808] text-white">
+      <div className={`relative min-h-screen w-full flex flex-col transition-colors duration-300 ${
+        theme === 'light' ? 'bg-[#F8F9FA] text-zinc-900' : 'bg-[#080808] text-white'
+      }`}>
         {/* 3D Floating Logo & Ambient Lighting in Background */}
-        <DashboardBackground role="coordinator" />
+        <DashboardBackground role="coordinator" theme={theme} />
 
         {/* Coordinator Top Navbar */}
         <CoordinatorNavbar

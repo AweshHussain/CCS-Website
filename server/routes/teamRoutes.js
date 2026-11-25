@@ -595,7 +595,9 @@ router.delete('/messages/clear/group/:groupId', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Group not found.' });
     }
 
-    const isMember = group.members.some((m) => m.studentId === currentUser.id);
+    const isMember =
+      (Array.isArray(group.memberIds) && group.memberIds.includes(currentUser.id)) ||
+      (Array.isArray(group.members) && group.members.some((m) => (m.studentId || m.id) === currentUser.id));
     const isCoordinator = currentUser.role === 'coordinator';
     if (!isMember && !isCoordinator) {
       return res.status(403).json({ success: false, message: 'Not authorized to clear this group chat.' });

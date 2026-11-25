@@ -131,7 +131,9 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
   ];
 
   return (
-    <header className="w-full sticky top-0 z-40 bg-[#080808]/95 backdrop-blur-md border-b border-white/10">
+    <header className={`w-full sticky top-0 z-40 backdrop-blur-md border-b transition-colors duration-300 ${
+      theme === 'light' ? 'bg-[#FFFFFF]/95 border-black/10' : 'bg-[#080808]/95 border-white/10'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* ================= LEFT: Brand ================= */}
         <button
@@ -141,13 +143,15 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
         >
           <div className="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center transition-transform duration-300 group-hover:scale-105 shrink-0">
             <img
-              src="/ccs_emblem_white.png"
-              alt="CCS Emblem"
+              src="/ccs_official_logo.png"
+              alt="CCS Logo"
               className="w-full h-full object-contain filter group-hover:brightness-125 transition-all"
             />
           </div>
           <div>
-            <span className="font-display font-bold text-white text-xs sm:text-sm tracking-wide block group-hover:text-zinc-100 transition-colors">
+            <span className={`font-display font-bold text-xs sm:text-sm tracking-wide block transition-colors ${
+              theme === 'light' ? 'text-zinc-900 group-hover:text-black' : 'text-white group-hover:text-zinc-100'
+            }`}>
               Code &amp; Compute Society
             </span>
             <span className="block text-[10px] font-mono text-[#E50920] group-hover:brightness-125 transition-all">
@@ -168,7 +172,11 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
                 onClick={() => onSelectTab(item.id)}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-white/10 text-white font-medium border border-white/15'
+                    ? theme === 'light'
+                      ? 'bg-black/10 text-zinc-900 font-semibold border border-black/15 shadow-sm'
+                      : 'bg-white/10 text-white font-medium border border-white/15'
+                    : theme === 'light'
+                    ? 'text-zinc-600 hover:text-black hover:bg-black/5'
                     : 'text-zinc-400 hover:text-white hover:bg-white/5'
                 }`}
               >
@@ -213,7 +221,9 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
               )}
             </div>
 
-            <span className="hidden sm:inline text-xs font-mono text-zinc-300">
+            <span className={`hidden sm:inline text-xs font-mono ${
+              theme === 'light' ? 'text-zinc-800' : 'text-zinc-300'
+            }`}>
               {currentUser.fullName?.split(' ')[0] || 'Coordinator'}
             </span>
 
