@@ -3,6 +3,7 @@ import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { Server as SocketIOServer } from 'socket.io';
+import jwt from 'jsonwebtoken';
 import app from './app.js';
 import { connectDB, db } from './db.js';
 import { activeHeartbeats } from './routes/teamRoutes.js';
@@ -11,6 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const uploadsDir = path.join(__dirname, 'uploads');
 const PORT = process.env.PORT || 5000;
+const JWT_SECRET = process.env.JWT_SECRET || 'ccs_jwt_super_secret_key_2026_production';
 
 // Create HTTP Server & attach Socket.io
 const httpServer = http.createServer(app);
@@ -27,35 +29,70 @@ const io = new SocketIOServer(httpServer, {
 // Pass io to Express app instance so REST routes can broadcast events
 app.set('io', io);
 
+// Socket.io JWT Authentication Middleware
+io.use((socket, next) => {
+  const token =
+    socket.handshake.auth?.token ||
+    (socket.handshake.headers?.authorization?.startsWith('Bearer ')
+      ? socket.handshake.headers.authorization.split(' ')[1]
+      : null);
+
+  if (!token) {
+    return next(new Error('Authentication required: Missing JWT in WebSocket handshake'));
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    socket.user = decoded;
+    next();
+  } catch (err) {
+    return next(new Error('Authentication failed: Invalid or expired WebSocket token'));
+  }
+});
+
 // Socket.io Real-time Collaboration Engine
 io.on('connection', (socket) => {
-  // 1. User Online Heartbeat Registration
-  socket.on('user_connected', ({ userId, groupId, fullName }) => {
-    if (!userId) return;
+  // 1. User Online Heartbeat Registration (strictly bound to authenticated socket.user.id)
+  socket.on('user_connected', async ({ groupId }) => {
+    const userId = socket.user.id;
     socket.userId = userId;
-    socket.groupId = groupId;
     activeHeartbeats.set(userId, Date.now());
 
-    // Join personal private room for direct 1-on-1 messages
+    // Join strictly the authenticated user's personal private room
     socket.join(`user_${userId}`);
 
-    // Join team group room if student belongs to a group
+    // If groupId is provided, verify against database to prevent cross-group eavesdropping
     if (groupId) {
-      socket.join(`group_${groupId}`);
-      io.to(`group_${groupId}`).emit('teammate_presence', {
-        userId,
-        status: 'online',
-        lastSeen: Date.now(),
-      });
+      try {
+        const user = await db.findUserById(userId);
+        if (socket.user.role === 'coordinator' || (user && user.groupId === groupId)) {
+          socket.groupId = groupId;
+          socket.join(`group_${groupId}`);
+          io.to(`group_${groupId}`).emit('teammate_presence', {
+            userId,
+            status: 'online',
+            lastSeen: Date.now(),
+          });
+        }
+      } catch (err) {
+        console.warn('Socket user_connected validation error:', err.message);
+      }
     }
 
     io.emit('presence_update', { userId, status: 'online' });
   });
 
-  // 2. Dynamic Room Switcher
-  socket.on('join_group_room', (groupId) => {
-    if (groupId) {
-      socket.join(`group_${groupId}`);
+  // 2. Dynamic Room Switcher with Authorization Check
+  socket.on('join_group_room', async (groupId) => {
+    if (!groupId) return;
+    try {
+      const user = await db.findUserById(socket.user.id);
+      if (socket.user.role === 'coordinator' || (user && user.groupId === groupId)) {
+        socket.groupId = groupId;
+        socket.join(`group_${groupId}`);
+      }
+    } catch (err) {
+      console.warn('Socket join_group_room error:', err.message);
     }
   });
 

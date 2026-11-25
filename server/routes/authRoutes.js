@@ -62,8 +62,16 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
     }
 
-    const validRoles = ['student', 'coordinator'];
-    const assignedRole = validRoles.includes(role) ? role : 'student';
+    // Security Enforcement: Public self-registration is strictly restricted to Student accounts.
+    // Coordinator and administrative credentials can only be provisioned by authorized coordinators via Admin Console.
+    if (role && role !== 'student') {
+      return res.status(403).json({
+        success: false,
+        message: 'Security Policy: Self-registration is strictly limited to Student accounts. Coordinator accounts must be provisioned by the Lead Coordinator.',
+      });
+    }
+
+    const assignedRole = 'student';
 
     // 1. Cryptographic Bcrypt Hash
     const salt = await bcrypt.genSalt(10);

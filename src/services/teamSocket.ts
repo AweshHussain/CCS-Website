@@ -12,7 +12,10 @@ export const getTeamSocket = (): Socket | null => {
         ? 'http://localhost:5000'
         : window.location.origin;
 
+    const token = localStorage.getItem('ccs_auth_token');
+
     socketInstance = io(socketUrl, {
+      auth: { token },
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 10,
@@ -37,13 +40,19 @@ export const getTeamSocket = (): Socket | null => {
 };
 
 export const registerSocketUser = (userId: string, groupId: string | null, fullName: string) => {
+  const token = localStorage.getItem('ccs_auth_token');
   const socket = getTeamSocket();
-  if (socket && socket.connected) {
-    socket.emit('user_connected', { userId, groupId, fullName });
-  } else if (socket) {
-    socket.once('connect', () => {
+  if (socket) {
+    if (token) {
+      socket.auth = { token };
+    }
+    if (socket.connected) {
       socket.emit('user_connected', { userId, groupId, fullName });
-    });
+    } else {
+      socket.once('connect', () => {
+        socket.emit('user_connected', { userId, groupId, fullName });
+      });
+    }
   }
 };
 
