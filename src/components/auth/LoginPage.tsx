@@ -361,6 +361,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
               token={authToken!}
               onNavigate={(tab) => setCoordinatorTab(tab)}
               onOpenChangePassword={() => setShowChangePasswordModal(true)}
+              theme={theme}
             />
           )}
 

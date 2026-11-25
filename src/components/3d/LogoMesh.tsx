@@ -104,24 +104,24 @@ export const LogoMesh: React.FC<LogoMeshProps> = ({
               {/* Solid, luminous physical material: Radiant Pure White in dark mode, Vibrant Crimson Red in light mode */}
               <mesh geometry={geo} castShadow receiveShadow>
                 <meshPhysicalMaterial
-                  color={isLight ? '#E50920' : '#FFFFFF'}
-                  emissive={isLight ? '#7a050f' : '#3a3a44'}
-                  roughness={isLight ? 0.12 : 0.08}
-                  metalness={isLight ? 0.08 : 0.02}
+                  color={isLight ? '#B30014' : '#FFFFFF'}
+                  emissive={isLight ? '#4D0008' : '#3a3a44'}
+                  roughness={isLight ? 0.2 : 0.08}
+                  metalness={isLight ? 0.15 : 0.02}
                   transmission={0}
                   clearcoat={1.0}
                   clearcoatRoughness={0.02}
                   specularIntensity={1.0}
-                  specularColor="#FFFFFF"
+                  specularColor={isLight ? '#E50920' : '#FFFFFF'}
                   reflectivity={0.95}
                 />
               </mesh>
 
-              {/* Razor-sharp, bright luminous outer edge contours */}
+              {/* Razor-sharp outer edge contours */}
               <lineSegments>
                 <edgesGeometry args={[geo, 20]} />
                 <lineBasicMaterial
-                  color={isLight ? '#FF2238' : '#FFFFFF'}
+                  color={isLight ? '#8B0000' : '#FFFFFF'}
                   transparent={false}
                   linewidth={2}
                 />
@@ -131,7 +131,7 @@ export const LogoMesh: React.FC<LogoMeshProps> = ({
               <lineSegments>
                 <edgesGeometry args={[geo, 20]} />
                 <lineBasicMaterial
-                  color={isLight ? '#FFA0AA' : '#FFFFFF'}
+                  color={isLight ? '#C41223' : '#FFFFFF'}
                   transparent={true}
                   opacity={0.85}
                   linewidth={1}

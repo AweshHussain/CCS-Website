@@ -23,12 +23,14 @@ interface CoordinatorLandingPageProps {
   token: string;
   onNavigate: (tab: CoordinatorTabType) => void;
   onOpenChangePassword: () => void;
+  theme?: 'dark' | 'light';
 }
 
 export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
   currentUser,
   token,
   onNavigate,
+  theme = 'dark',
 }) => {
   const [studentUpdates, setStudentUpdates] = useState<any[]>([]);
   const [assignedWork, setAssignedWork] = useState<any[]>([]);
@@ -71,12 +73,18 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
   return (
     <div className="w-full flex flex-col gap-6 animate-in fade-in duration-200">
       {/* ================= CLEAN HEADER ================= */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/10">
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b ${
+        theme === 'light' ? 'border-black/10' : 'border-white/10'
+      }`}>
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold font-display text-white">
+          <h1 className={`text-xl sm:text-2xl font-bold font-display ${
+            theme === 'light' ? 'text-zinc-900' : 'text-white'
+          }`}>
             Welcome, {currentUser.fullName}
           </h1>
-          <p className="text-xs font-mono text-zinc-400 mt-0.5">
+          <p className={`text-xs font-mono mt-0.5 ${
+            theme === 'light' ? 'text-zinc-600' : 'text-zinc-400'
+          }`}>
             Student Coordinator • {currentUser.department || 'Executive Operations'}
           </p>
         </div>
@@ -84,20 +92,28 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => onNavigate('task_directives')}
-            className="px-3.5 py-1.5 rounded-lg bg-[#E50920] hover:bg-[#ff1e38] text-white text-xs font-mono font-medium transition-colors cursor-pointer flex items-center gap-1.5"
+            className="px-3.5 py-1.5 rounded-lg bg-[#E50920] hover:bg-[#ff1e38] text-white text-xs font-mono font-medium transition-colors cursor-pointer flex items-center gap-1.5 shadow-md shadow-[#E50920]/20"
           >
             <ListOrdered className="w-3.5 h-3.5" />
             <span>Task Directives</span>
           </button>
           <button
             onClick={() => onNavigate('student_work')}
-            className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-mono transition-colors cursor-pointer"
+            className={`px-3.5 py-1.5 rounded-lg border text-xs font-mono transition-colors cursor-pointer ${
+              theme === 'light'
+                ? 'bg-black/5 hover:bg-black/10 border-black/15 text-zinc-800'
+                : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+            }`}
           >
             Review Student Work
           </button>
           <button
             onClick={() => onNavigate('accounts')}
-            className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-mono transition-colors cursor-pointer"
+            className={`px-3.5 py-1.5 rounded-lg border text-xs font-mono transition-colors cursor-pointer ${
+              theme === 'light'
+                ? 'bg-black/5 hover:bg-black/10 border-black/15 text-zinc-800'
+                : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+            }`}
           >
             Manage Accounts
           </button>
@@ -109,22 +125,38 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
         {/* Card 1: Student Work */}
         <div
           onClick={() => onNavigate('student_work')}
-          className="p-5 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 hover:border-white/20 transition-all cursor-pointer group"
+          className={`p-5 rounded-xl border backdrop-blur-2xl transition-all cursor-pointer group ${
+            theme === 'light'
+              ? 'bg-white/95 border-black/10 shadow-lg shadow-black/5 hover:border-black/25'
+              : 'bg-[#0B0C10] border-white/10 shadow-xl shadow-black/60 hover:border-white/20'
+          }`}
         >
-          <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-2">
+          <div className={`flex items-center justify-between text-xs font-mono mb-2 ${
+            theme === 'light' ? 'text-zinc-500' : 'text-zinc-400'
+          }`}>
             <span>Student Projects</span>
-            <FolderGit2 className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
+            <FolderGit2 className={`w-4 h-4 transition-colors ${
+              theme === 'light' ? 'text-zinc-500 group-hover:text-black' : 'text-zinc-400 group-hover:text-white'
+            }`} />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-white font-display">
+            <span className={`text-2xl font-bold font-display ${
+              theme === 'light' ? 'text-zinc-900' : 'text-white'
+            }`}>
               {studentUpdates.length}
             </span>
             {pendingCount > 0 ? (
-              <span className="text-xs font-mono text-amber-400">
+              <span className={`text-xs font-mono ${
+                theme === 'light' ? 'text-amber-600 font-semibold' : 'text-amber-400'
+              }`}>
                 ({pendingCount} pending review)
               </span>
             ) : (
-              <span className="text-xs font-mono text-emerald-400">(Up to date)</span>
+              <span className={`text-xs font-mono ${
+                theme === 'light' ? 'text-emerald-600 font-semibold' : 'text-emerald-400'
+              }`}>
+                (Up to date)
+              </span>
             )}
           </div>
         </div>
@@ -132,17 +164,27 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
         {/* Card 2: Task Directives */}
         <div
           onClick={() => onNavigate('task_directives')}
-          className="p-5 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 hover:border-white/20 transition-all cursor-pointer group"
+          className={`p-5 rounded-xl border backdrop-blur-2xl transition-all cursor-pointer group ${
+            theme === 'light'
+              ? 'bg-white/95 border-black/10 shadow-lg shadow-black/5 hover:border-black/25'
+              : 'bg-[#0B0C10] border-white/10 shadow-xl shadow-black/60 hover:border-white/20'
+          }`}
         >
-          <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-2">
+          <div className={`flex items-center justify-between text-xs font-mono mb-2 ${
+            theme === 'light' ? 'text-zinc-500' : 'text-zinc-400'
+          }`}>
             <span>Task Directives</span>
             <ListOrdered className="w-4 h-4 text-[#E50920] group-hover:scale-110 transition-transform" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-white font-display">
+            <span className={`text-2xl font-bold font-display ${
+              theme === 'light' ? 'text-zinc-900' : 'text-white'
+            }`}>
               {activeDirectivesCount}
             </span>
-            <span className="text-xs font-mono text-emerald-400">
+            <span className={`text-xs font-mono ${
+              theme === 'light' ? 'text-emerald-600 font-semibold' : 'text-emerald-400'
+            }`}>
               ({totalClaimsCount} queued claims)
             </span>
           </div>
@@ -151,33 +193,55 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
         {/* Card 3: Accounts */}
         <div
           onClick={() => onNavigate('accounts')}
-          className="p-5 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 hover:border-white/20 transition-all cursor-pointer group"
+          className={`p-5 rounded-xl border backdrop-blur-2xl transition-all cursor-pointer group ${
+            theme === 'light'
+              ? 'bg-white/95 border-black/10 shadow-lg shadow-black/5 hover:border-black/25'
+              : 'bg-[#0B0C10] border-white/10 shadow-xl shadow-black/60 hover:border-white/20'
+          }`}
         >
-          <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-2">
+          <div className={`flex items-center justify-between text-xs font-mono mb-2 ${
+            theme === 'light' ? 'text-zinc-500' : 'text-zinc-400'
+          }`}>
             <span>Registered Accounts</span>
-            <Users className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
+            <Users className={`w-4 h-4 transition-colors ${
+              theme === 'light' ? 'text-zinc-500 group-hover:text-black' : 'text-zinc-400 group-hover:text-white'
+            }`} />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-white font-display">
+            <span className={`text-2xl font-bold font-display ${
+              theme === 'light' ? 'text-zinc-900' : 'text-white'
+            }`}>
               {userCount || 3}
             </span>
-            <span className="text-xs font-mono text-zinc-500">Active</span>
+            <span className={`text-xs font-mono ${
+              theme === 'light' ? 'text-zinc-500' : 'text-zinc-500'
+            }`}>
+              Active
+            </span>
           </div>
         </div>
       </div>
 
       {/* ================= OPTIONAL BANNER ROW ================= */}
       {settings?.isBannerActive && (
-        <div className="px-4 py-3 rounded-xl bg-[#0B0C10] backdrop-blur-2xl border border-white/10 shadow-lg shadow-black/50 flex items-center justify-between gap-3">
+        <div className={`px-4 py-3 rounded-xl backdrop-blur-2xl border flex items-center justify-between gap-3 ${
+          theme === 'light'
+            ? 'bg-white/95 border-black/10 shadow-md shadow-black/5'
+            : 'bg-[#0B0C10] border-white/10 shadow-lg shadow-black/50'
+        }`}>
           <div className="flex items-center gap-2.5 min-w-0">
             <Radio className="w-3.5 h-3.5 text-[#E50920] shrink-0" />
-            <span className="text-xs font-mono text-zinc-300 truncate">
+            <span className={`text-xs font-mono truncate ${
+              theme === 'light' ? 'text-zinc-800' : 'text-zinc-300'
+            }`}>
               {settings.announcementBanner}
             </span>
           </div>
           <button
             onClick={() => onNavigate('settings')}
-            className="text-[11px] font-mono text-zinc-400 hover:text-white shrink-0 cursor-pointer"
+            className={`text-[11px] font-mono shrink-0 cursor-pointer ${
+              theme === 'light' ? 'text-zinc-500 hover:text-black font-semibold' : 'text-zinc-400 hover:text-white'
+            }`}
           >
             Edit
           </button>
@@ -187,14 +251,24 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
       {/* ================= TWO CLEAN PANELS ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Left: Student Updates */}
-        <div className="p-5 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 flex flex-col gap-3">
-          <div className="flex items-center justify-between pb-2 border-b border-white/10">
-            <h3 className="text-sm font-semibold text-white font-display">
+        <div className={`p-5 rounded-xl border backdrop-blur-2xl flex flex-col gap-3 ${
+          theme === 'light'
+            ? 'bg-white/95 border-black/10 shadow-lg shadow-black/5'
+            : 'bg-[#0B0C10] border-white/10 shadow-xl shadow-black/60'
+        }`}>
+          <div className={`flex items-center justify-between pb-2 border-b ${
+            theme === 'light' ? 'border-black/10' : 'border-white/10'
+          }`}>
+            <h3 className={`text-sm font-semibold font-display ${
+              theme === 'light' ? 'text-zinc-900' : 'text-white'
+            }`}>
               Recent Student Submissions
             </h3>
             <button
               onClick={() => onNavigate('student_work')}
-              className="text-xs font-mono text-zinc-400 hover:text-white flex items-center gap-0.5 cursor-pointer"
+              className={`text-xs font-mono flex items-center gap-0.5 cursor-pointer ${
+                theme === 'light' ? 'text-zinc-500 hover:text-black' : 'text-zinc-400 hover:text-white'
+              }`}
             >
               <span>View All</span>
               <ChevronRight className="w-3 h-3" />
@@ -207,11 +281,19 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
                 <div
                   key={item.id}
                   onClick={() => onNavigate('student_work')}
-                  className="p-3.5 rounded-lg bg-[#14151C] border border-white/10 hover:border-white/20 transition-all flex flex-col gap-1.5 cursor-pointer"
+                  className={`p-3.5 rounded-lg border transition-all flex flex-col gap-1.5 cursor-pointer ${
+                    theme === 'light'
+                      ? 'bg-zinc-50/90 border-black/10 hover:border-[#E50920]/50 hover:bg-zinc-100/80 shadow-sm'
+                      : 'bg-[#14151C] border-white/10 hover:border-white/20'
+                  }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-white">{item.studentName}</span>
+                      <span className={`text-xs font-semibold ${
+                        theme === 'light' ? 'text-zinc-900' : 'text-white'
+                      }`}>
+                        {item.studentName}
+                      </span>
                       <span
                         className={`w-2 h-2 rounded-full inline-block ${
                           item.isOnline
@@ -221,75 +303,143 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
                         title={item.isOnline ? 'Online' : 'Offline'}
                       />
                     </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-zinc-400">
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${
+                      theme === 'light' ? 'bg-black/5 text-zinc-600' : 'bg-white/5 text-zinc-400'
+                    }`}>
                       {item.domain}
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-300 line-clamp-1">{item.projectTitle}</p>
+                  <p className={`text-xs line-clamp-1 ${
+                    theme === 'light' ? 'text-zinc-700' : 'text-zinc-300'
+                  }`}>
+                    {item.projectTitle}
+                  </p>
                 </div>
               ))
             ) : (
-              <p className="text-xs font-mono text-zinc-500 py-4 text-center">No student submissions yet.</p>
+              <p className={`text-xs font-mono py-4 text-center ${
+                theme === 'light' ? 'text-zinc-400' : 'text-zinc-500'
+              }`}>
+                No student submissions yet.
+              </p>
             )}
           </div>
         </div>
 
         {/* Right: Quick Action Controls */}
-        <div className="p-5 rounded-xl border border-white/10 bg-[#0B0C10] backdrop-blur-2xl shadow-xl shadow-black/60 flex flex-col gap-3">
-          <div className="flex items-center justify-between pb-2 border-b border-white/10">
-            <h3 className="text-sm font-semibold text-white font-display">
+        <div className={`p-5 rounded-xl border backdrop-blur-2xl flex flex-col gap-3 ${
+          theme === 'light'
+            ? 'bg-white/95 border-black/10 shadow-lg shadow-black/5'
+            : 'bg-[#0B0C10] border-white/10 shadow-xl shadow-black/60'
+        }`}>
+          <div className={`flex items-center justify-between pb-2 border-b ${
+            theme === 'light' ? 'border-black/10' : 'border-white/10'
+          }`}>
+            <h3 className={`text-sm font-semibold font-display ${
+              theme === 'light' ? 'text-zinc-900' : 'text-white'
+            }`}>
               Quick Operations
             </h3>
-            <span className="text-xs font-mono text-zinc-500">Coordinator Desk</span>
+            <span className={`text-xs font-mono ${
+              theme === 'light' ? 'text-zinc-500' : 'text-zinc-500'
+            }`}>
+              Coordinator Desk
+            </span>
           </div>
 
           <div className="flex flex-col gap-2.5">
             <button
               onClick={() => onNavigate('student_work')}
-              className="p-3.5 rounded-lg bg-[#14151C] border border-white/10 hover:border-[#E50920]/40 transition-all flex items-center justify-between cursor-pointer text-left group"
+              className={`p-3.5 rounded-lg border transition-all flex items-center justify-between cursor-pointer text-left group ${
+                theme === 'light'
+                  ? 'bg-zinc-50/90 border-black/10 hover:border-[#E50920]/50 hover:bg-zinc-100/80 shadow-sm'
+                  : 'bg-[#14151C] border-white/10 hover:border-[#E50920]/40'
+              }`}
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-[#E50920]/10 flex items-center justify-center text-[#E50920]">
                   <FolderGit2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-white group-hover:text-[#E50920] transition-colors">Review Projects & Milestones</div>
-                  <div className="text-[11px] font-mono text-zinc-400">Approve submissions and leave feedback</div>
+                  <div className={`text-xs font-semibold group-hover:text-[#E50920] transition-colors ${
+                    theme === 'light' ? 'text-zinc-900' : 'text-white'
+                  }`}>
+                    Review Projects & Milestones
+                  </div>
+                  <div className={`text-[11px] font-mono ${
+                    theme === 'light' ? 'text-zinc-500' : 'text-zinc-400'
+                  }`}>
+                    Approve submissions and leave feedback
+                  </div>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+              <ChevronRight className={`w-4 h-4 transition-colors ${
+                theme === 'light' ? 'text-zinc-400 group-hover:text-black' : 'text-zinc-500 group-hover:text-white'
+              }`} />
             </button>
 
             <button
               onClick={() => onNavigate('accounts')}
-              className="p-3.5 rounded-lg bg-[#14151C]/80 border border-white/10 hover:border-[#E50920]/40 transition-all flex items-center justify-between cursor-pointer text-left group"
+              className={`p-3.5 rounded-lg border transition-all flex items-center justify-between cursor-pointer text-left group ${
+                theme === 'light'
+                  ? 'bg-zinc-50/90 border-black/10 hover:border-[#E50920]/50 hover:bg-zinc-100/80 shadow-sm'
+                  : 'bg-[#14151C]/80 border-white/10 hover:border-[#E50920]/40'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-zinc-300">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  theme === 'light' ? 'bg-black/5 text-zinc-700' : 'bg-white/5 text-zinc-300'
+                }`}>
                   <UserPlus className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-white group-hover:text-[#E50920] transition-colors">Grant New Credentials</div>
-                  <div className="text-[11px] font-mono text-zinc-400">Issue student member or coordinator accounts</div>
+                  <div className={`text-xs font-semibold group-hover:text-[#E50920] transition-colors ${
+                    theme === 'light' ? 'text-zinc-900' : 'text-white'
+                  }`}>
+                    Grant New Credentials
+                  </div>
+                  <div className={`text-[11px] font-mono ${
+                    theme === 'light' ? 'text-zinc-500' : 'text-zinc-400'
+                  }`}>
+                    Issue student member or coordinator accounts
+                  </div>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+              <ChevronRight className={`w-4 h-4 transition-colors ${
+                theme === 'light' ? 'text-zinc-400 group-hover:text-black' : 'text-zinc-500 group-hover:text-white'
+              }`} />
             </button>
 
             <button
               onClick={() => onNavigate('settings')}
-              className="p-3.5 rounded-lg bg-[#14151C]/80 border border-white/10 hover:border-[#E50920]/40 transition-all flex items-center justify-between cursor-pointer text-left group"
+              className={`p-3.5 rounded-lg border transition-all flex items-center justify-between cursor-pointer text-left group ${
+                theme === 'light'
+                  ? 'bg-zinc-50/90 border-black/10 hover:border-[#E50920]/50 hover:bg-zinc-100/80 shadow-sm'
+                  : 'bg-[#14151C]/80 border-white/10 hover:border-[#E50920]/40'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-zinc-300">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  theme === 'light' ? 'bg-black/5 text-zinc-700' : 'bg-white/5 text-zinc-300'
+                }`}>
                   <Sliders className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-white group-hover:text-[#E50920] transition-colors">Broadcasts & Settings</div>
-                  <div className="text-[11px] font-mono text-zinc-400">Manage announcement ticker and system state</div>
+                  <div className={`text-xs font-semibold group-hover:text-[#E50920] transition-colors ${
+                    theme === 'light' ? 'text-zinc-900' : 'text-white'
+                  }`}>
+                    Broadcasts & Settings
+                  </div>
+                  <div className={`text-[11px] font-mono ${
+                    theme === 'light' ? 'text-zinc-500' : 'text-zinc-400'
+                  }`}>
+                    Manage announcement ticker and system state
+                  </div>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+              <ChevronRight className={`w-4 h-4 transition-colors ${
+                theme === 'light' ? 'text-zinc-400 group-hover:text-black' : 'text-zinc-500 group-hover:text-white'
+              }`} />
             </button>
           </div>
         </div>

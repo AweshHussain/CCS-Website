@@ -27,7 +27,7 @@ export const DashboardBackground: React.FC<DashboardBackgroundProps> = ({ role =
       {/* 3D Rotating CCS Floating Logo in Background with Bright Edges */}
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
         <div className={`w-[420px] h-[420px] sm:w-[560px] sm:h-[560px] pointer-events-none transition-opacity ${
-          theme === 'light' ? 'opacity-20' : 'opacity-40'
+          theme === 'light' ? 'opacity-85' : 'opacity-40'
         }`}>
           <Floating3DLogo
             isWatermark={true}
