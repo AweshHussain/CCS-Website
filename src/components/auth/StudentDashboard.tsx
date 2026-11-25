@@ -263,6 +263,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [profileOpen]);
 
+  // Ensure window stays at the top when entering dashboard or switching tabs
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [activeTab]);
+
   // Fetch student data
   const fetchData = async () => {
     setLoading(true);

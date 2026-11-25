@@ -102,7 +102,7 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
   const [messageInput, setMessageInput] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [typingUser, setTypingUser] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Post Activity Modal State
   const [showActivityModal, setShowActivityModal] = useState(false);
@@ -113,9 +113,18 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
   const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
   const [activityError, setActivityError] = useState('');
 
-  // Auto-scroll chat to bottom
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Auto-scroll chat internally inside the message container ONLY (never scrolls the page/window)
+  const scrollToBottom = (smooth = false) => {
+    if (messagesContainerRef.current) {
+      if (smooth) {
+        messagesContainerRef.current.scrollTo({
+          top: messagesContainerRef.current.scrollHeight,
+          behavior: 'smooth',
+        });
+      } else {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    }
   };
 
   useEffect(() => {
@@ -788,8 +797,8 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
               {typingUser && <span className="text-[10px] text-[#E50920] animate-pulse">{typingUser} is typing...</span>}
             </div>
 
-            {/* Message History Container */}
-            <div className="flex-1 overflow-y-auto space-y-3 py-2 pr-1">
+            {/* Message History Container (internal scrolling only) */}
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto space-y-3 py-2 pr-1 max-h-[380px] min-h-[300px]">
               {chatMode === 'group' ? (
                 groupMessages.length === 0 ? (
                   <div className="p-8 text-center text-zinc-500 font-mono text-xs">
@@ -854,7 +863,6 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                   })
                 )
               )}
-              <div ref={messagesEndRef} />
             </div>
 
             {/* Message Input Box */}
