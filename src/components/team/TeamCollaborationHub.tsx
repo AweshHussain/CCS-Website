@@ -76,6 +76,7 @@ interface TeamCollaborationHubProps {
     avatarUrl?: string;
     groupId?: string | null;
     groupName?: string | null;
+    permissions?: any;
   };
   token: string;
   onRefreshUser?: () => void;
@@ -92,6 +93,14 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
   const [teammates, setTeammates] = useState<Teammate[]>([]);
   const [activities, setActivities] = useState<TeamActivity[]>([]);
   const [teamAnnouncements, setTeamAnnouncements] = useState<any[]>([]);
+  const [dismissedBroadcastIds, setDismissedBroadcastIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('ccs_dismissed_team_broadcasts');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [activityFilter, setActivityFilter] = useState<string>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -457,20 +466,58 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
     return act.actionType === activityFilter;
   });
 
+  const visibleTeamAnnouncements = teamAnnouncements.filter((a) => !dismissedBroadcastIds.includes(a.id));
+
+  const handleDismissBroadcast = async (id: string) => {
+    const updated = [...dismissedBroadcastIds, id];
+    setDismissedBroadcastIds(updated);
+    try {
+      localStorage.setItem('ccs_dismissed_team_broadcasts', JSON.stringify(updated));
+    } catch {}
+
+    setTeamAnnouncements((prev) => prev.filter((a) => a.id !== id));
+
+    try {
+      const hasPermission =
+        currentUser.role === 'coordinator' ||
+        currentUser.role === 'admin' ||
+        currentUser.permissions?.canBroadcastAnnouncements;
+
+      if (hasPermission && token) {
+        await fetch(`/api/coordinator/announcements/${id}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+    } catch {}
+  };
+
   return (
     <div className="w-full flex flex-col gap-6 animate-fadeIn">
       {/* Pinned Team Directives / Broadcasts */}
-      {teamAnnouncements.length > 0 && (
-        <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono text-emerald-300">
-          <div className="flex items-center gap-2.5 overflow-hidden">
+      {visibleTeamAnnouncements.length > 0 && (
+        <div className="p-3.5 sm:p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono text-emerald-300">
+          <div className="flex items-center gap-2.5 overflow-hidden min-w-0">
             <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold uppercase tracking-wider shrink-0">
               Team Broadcast
             </span>
-            <span className="text-white font-medium truncate">{teamAnnouncements[0].message}</span>
+            <span className="text-white font-medium truncate">{visibleTeamAnnouncements[0].message}</span>
           </div>
-          <span className="text-[10px] text-emerald-400/80 shrink-0">
-            {new Date(teamAnnouncements[0].createdAt).toLocaleDateString()}
-          </span>
+          <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
+            <span className="text-[10px] text-emerald-400/80">
+              {new Date(visibleTeamAnnouncements[0].createdAt).toLocaleDateString()}
+            </span>
+            <button
+              onClick={() => handleDismissBroadcast(visibleTeamAnnouncements[0].id)}
+              className="p-1 sm:p-1.5 rounded-lg text-emerald-400/80 hover:text-white hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/50 transition-all cursor-pointer flex items-center justify-center group"
+              title="Cut / Dismiss broadcast"
+              aria-label="Cut / Dismiss broadcast"
+            >
+              <X className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+            </button>
+          </div>
         </div>
       )}
 
