@@ -347,6 +347,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
           pendingSubmissionsCount={pendingSubmissionsCount}
           activeDirectivesCount={activeDirectivesCount}
           totalUsersCount={totalUsersCount}
+          theme={theme}
+          onToggleTheme={onToggleTheme}
         />
 
         {/* Main Dashboard Views Container */}
@@ -432,6 +434,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
         token={authToken!}
         onLogout={handleLogout}
         onBackToHome={onBackToHome}
+        theme={theme}
+        onToggleTheme={onToggleTheme}
       />
     );
   }

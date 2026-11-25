@@ -17,6 +17,7 @@ import {
   ListOrdered,
 } from 'lucide-react';
 import { useSessionTimer } from '../../utils/sessionSecurity';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 export type CoordinatorTabType =
   | 'dashboard'
@@ -45,6 +46,8 @@ interface CoordinatorNavbarProps {
   pendingSubmissionsCount?: number;
   activeDirectivesCount?: number;
   totalUsersCount?: number;
+  theme?: 'dark' | 'light';
+  onToggleTheme?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
@@ -60,6 +63,8 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
   pendingSubmissionsCount = 0,
   activeDirectivesCount = 0,
   totalUsersCount = 0,
+  theme = 'dark',
+  onToggleTheme,
 }) => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -185,12 +190,15 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
           })}
         </nav>
 
-        {/* ================= RIGHT: Profile Trigger ================= */}
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={() => setProfileOpen(!profileOpen)}
-            className="flex items-center gap-2.5 p-1 sm:pr-2.5 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10 transition-all cursor-pointer"
-          >
+        {/* ================= RIGHT: Theme Toggle & Profile Trigger ================= */}
+        <div className="flex items-center gap-2">
+          {onToggleTheme && <ThemeToggle theme={theme} onToggle={onToggleTheme} />}
+
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setProfileOpen(!profileOpen)}
+              className="flex items-center gap-2.5 p-1 sm:pr-2.5 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10 transition-all cursor-pointer"
+            >
             <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 flex items-center justify-center bg-zinc-900 shrink-0">
               {currentUser.avatarUrl ? (
                 <img
@@ -408,6 +416,7 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
           )}
         </div>
       </div>
+    </div>
 
       {/* Mobile nav bar */}
       <div className="md:hidden border-t border-white/10 px-2 py-2 flex items-center justify-around">

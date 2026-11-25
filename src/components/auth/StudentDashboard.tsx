@@ -36,6 +36,7 @@ import { UserProfilePage } from './UserProfilePage';
 import { TeamCollaborationHub } from '../team/TeamCollaborationHub';
 import { registerSocketUser } from '../../services/teamSocket';
 import { useSessionTimer } from '../../utils/sessionSecurity';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 interface StudentDashboardProps {
   currentUser: {
@@ -58,6 +59,8 @@ interface StudentDashboardProps {
   token: string;
   onLogout: () => void;
   onBackToHome: () => void;
+  theme?: 'dark' | 'light';
+  onToggleTheme?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 type StudentTab = 'team_collaboration' | 'my_projects' | 'assigned_work' | 'announcements' | 'profile';
@@ -121,6 +124,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   token,
   onLogout,
   onBackToHome,
+  theme = 'dark',
+  onToggleTheme,
 }) => {
   const [currentTab, setCurrentTab] = useState<StudentTab>('team_collaboration');
   const [profileOpen, setProfileOpen] = useState(false);
@@ -639,12 +644,15 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             </button>
           </nav>
 
-          {/* Right Profile Dropdown */}
-          <div className="relative" ref={profileRef}>
-            <button
-              onClick={() => setProfileOpen(!profileOpen)}
-              className="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-1.5 rounded-full border border-white/10 hover:border-[#E50920]/40 bg-white/[0.03] transition-all cursor-pointer"
-            >
+          {/* Right Profile Dropdown & Theme Toggle */}
+          <div className="flex items-center gap-2">
+            {onToggleTheme && <ThemeToggle theme={theme} onToggle={onToggleTheme} />}
+
+            <div className="relative" ref={profileRef}>
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-1.5 rounded-full border border-white/10 hover:border-[#E50920]/40 bg-white/[0.03] transition-all cursor-pointer"
+              >
               <div className="w-7 h-7 rounded-full bg-[#E50920]/20 text-[#E50920] border border-[#E50920]/40 flex items-center justify-center font-bold text-xs">
                 {currentUser.fullName?.charAt(0) || 'S'}
               </div>
@@ -730,7 +738,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             )}
           </div>
         </div>
-      </header>
+      </div>
+    </header>
 
       {/* ================= MAIN CONTAINER ================= */}
       <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex-1 flex flex-col gap-6 relative z-10">

@@ -43,5 +43,38 @@
     "senderAvatar": "",
     "recipientId": "user-1795577287879-71ms0w",
     "content": "Hi"
+  },
+  {
+    "id": "msg-1795598807774-6im7j",
+    "createdAt": "2026-11-25T09:26:47.774Z",
+    "attachments": [],
+    "type": "group",
+    "groupId": "group-1795577119746-vnnt",
+    "senderId": "user-1795585672561-p0br82",
+    "senderName": "Syed Mohammad Sohaib Hussain",
+    "senderAvatar": "",
+    "content": "hi"
+  },
+  {
+    "id": "msg-1795598823933-2k3fn",
+    "createdAt": "2026-11-25T09:27:03.933Z",
+    "attachments": [],
+    "type": "group",
+    "groupId": "group-1795577119746-vnnt",
+    "senderId": "user-1795585672561-p0br82",
+    "senderName": "Syed Mohammad Sohaib Hussain",
+    "senderAvatar": "",
+    "content": "kya be"
+  },
+  {
+    "id": "msg-1795598828339-qhad5",
+    "createdAt": "2026-11-25T09:27:08.339Z",
+    "attachments": [],
+    "type": "group",
+    "groupId": "group-1795577119746-vnnt",
+    "senderId": "user-1795585672561-p0br82",
+    "senderName": "Syed Mohammad Sohaib Hussain",
+    "senderAvatar": "",
+    "content": "tm kya kar rha h"
   }
 ]
