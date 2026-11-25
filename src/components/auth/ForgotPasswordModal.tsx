@@ -46,6 +46,11 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        setError('Server is updating or unavailable. Please retry in a few seconds.');
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         setSuccessMessage(data.message || 'Verification code sent to your email.');
@@ -92,6 +97,11 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
           newPassword,
         }),
       });
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        setError('Server is updating or unavailable. Please retry in a few seconds.');
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         alert('Password successfully reset! You can now log in with your new password.');
