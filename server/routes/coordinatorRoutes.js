@@ -420,4 +420,14 @@ router.delete('/assigned-work/:id', requireRoles(['coordinator']), async (req, r
   }
 });
 
+// GET /api/coordinator/system-status - Diagnostics & Database Connection Mode
+router.get('/system-status', async (req, res) => {
+  return res.status(200).json({
+    success: true,
+    isCloudConnected: db.isCloudConnected(),
+    environment: process.env.NODE_ENV || 'development',
+    hasMongoUri: Boolean(process.env.MONGODB_URI),
+  });
+});
+
 export default router;
