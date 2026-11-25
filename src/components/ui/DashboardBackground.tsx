@@ -21,12 +21,6 @@ export const DashboardBackground: React.FC<DashboardBackgroundProps> = ({ role =
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
         {/* Ambient red halo behind 3D logo */}
         <div className="w-[450px] h-[450px] sm:w-[550px] sm:h-[550px] rounded-full bg-[#E50920]/14 blur-[130px] pointer-events-none" />
-        
-        {/* Rotating subtle reticle rings */}
-        <div
-          className="absolute w-[420px] h-[420px] sm:w-[520px] sm:h-[520px] rounded-full border border-dashed border-white/5 animate-spin pointer-events-none"
-          style={{ animationDuration: '60s' }}
-        />
 
         {/* 3D Model Instance floating in background */}
         <div className="absolute w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] opacity-25 pointer-events-none">

@@ -428,11 +428,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
             authStatus !== 'idle' ? 'scale-125 bg-[#E50920]/25' : ''
           }`}
         />
-        {/* Rotating subtle reticle rings */}
-        <div
-          className="absolute w-[420px] h-[420px] sm:w-[520px] sm:h-[520px] rounded-full border border-dashed border-white/5 animate-spin pointer-events-none"
-          style={{ animationDuration: '60s' }}
-        />
 
         {/* 3D Model Instance floating in background */}
         <div className="absolute w-[360px] h-[360px] sm:w-[460px] sm:h-[460px] opacity-35 transition-opacity duration-500">
