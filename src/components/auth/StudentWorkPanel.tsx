@@ -28,18 +28,26 @@ interface StudentSubmission {
   progressPercent: number;
   status: 'pending' | 'approved' | 'changes_requested';
   coordinatorFeedback?: string;
+  coordinatorName?: string;
   submittedAt: string;
   updatedAt?: string;
 }
 
 interface StudentWorkPanelProps {
   token: string;
+  currentUser?: {
+    id?: string;
+    fullName?: string;
+    email?: string;
+    role?: string;
+  } | null;
   onCountUpdate?: (pendingCount: number) => void;
 }
 
-export const StudentWorkPanel: React.FC<StudentWorkPanelProps> = ({ token, onCountUpdate }) => {
+export const StudentWorkPanel: React.FC<StudentWorkPanelProps> = ({ token, currentUser, onCountUpdate }) => {
   const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,6 +94,17 @@ export const StudentWorkPanel: React.FC<StudentWorkPanelProps> = ({ token, onCou
     fetchSubmissions();
   }, [token]);
 
+  const handleManualRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    const minSpinPromise = new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      await Promise.all([fetchSubmissions(), minSpinPromise]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const handleOpenReview = (submission: StudentSubmission) => {
     setReviewingSubmission(submission);
     setReviewStatus(submission.status);
@@ -98,6 +117,17 @@ export const StudentWorkPanel: React.FC<StudentWorkPanelProps> = ({ token, onCou
 
     setSubmittingReview(true);
     try {
+      const reviewerName = currentUser?.fullName || currentUser?.email || (() => {
+        try {
+          const saved = localStorage.getItem('ccs_current_user');
+          if (saved) {
+            const p = JSON.parse(saved);
+            return p.fullName || p.email;
+          }
+        } catch {}
+        return 'Coordinator';
+      })();
+
       const res = await fetch(`/api/coordinator/student-updates/${reviewingSubmission.id}/status`, {
         method: 'PUT',
         headers: {
@@ -107,6 +137,7 @@ export const StudentWorkPanel: React.FC<StudentWorkPanelProps> = ({ token, onCou
         body: JSON.stringify({
           status: reviewStatus,
           coordinatorFeedback: reviewFeedback.trim(),
+          coordinatorName: reviewerName,
         }),
       });
 
@@ -229,12 +260,12 @@ export const StudentWorkPanel: React.FC<StudentWorkPanelProps> = ({ token, onCou
           </button>
 
           <button
-            onClick={fetchSubmissions}
-            disabled={loading}
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
             className="p-2 rounded-xl glass-panel text-zinc-400 hover:text-white transition-colors cursor-pointer"
             title="Refresh Submissions"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-[#E50920] ${isRefreshing ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
@@ -355,8 +386,8 @@ export const StudentWorkPanel: React.FC<StudentWorkPanelProps> = ({ token, onCou
                   <div className="ml-2 p-3 rounded-2xl bg-black/50 border border-white/10 flex items-start gap-2.5 text-xs font-mono">
                     <MessageSquare className="w-3.5 h-3.5 text-[#E50920] shrink-0 mt-0.5" />
                     <div>
-                      <span className="text-zinc-400 text-[10px] block uppercase tracking-wider">
-                        Coordinator Feedback:
+                      <span className="text-zinc-400 text-[10px] block uppercase tracking-wider font-semibold">
+                        {sub.coordinatorName ? `${sub.coordinatorName} (Coordinator):` : 'Coordinator:'}
                       </span>
                       <p className="text-zinc-200 mt-0.5">{sub.coordinatorFeedback}</p>
                     </div>

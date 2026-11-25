@@ -7,6 +7,7 @@ import {
   UserPlus,
   Sliders,
   Shield,
+  ListOrdered,
 } from 'lucide-react';
 import { CoordinatorTabType } from './CoordinatorNavbar';
 
@@ -30,25 +31,29 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
   onNavigate,
 }) => {
   const [studentUpdates, setStudentUpdates] = useState<any[]>([]);
+  const [assignedWork, setAssignedWork] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
   const [userCount, setUserCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [resUpdates, resSettings, resUsers] = await Promise.all([
+        const [resUpdates, resWork, resSettings, resUsers] = await Promise.all([
           fetch('/api/coordinator/student-updates', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/api/coordinator/assigned-work', { headers: { Authorization: `Bearer ${token}` } }),
           fetch('/api/coordinator/settings', { headers: { Authorization: `Bearer ${token}` } }),
           fetch('/api/admin/users', { headers: { Authorization: `Bearer ${token}` } }),
         ]);
 
-        const [dataUpdates, dataSettings, dataUsers] = await Promise.all([
+        const [dataUpdates, dataWork, dataSettings, dataUsers] = await Promise.all([
           resUpdates.json(),
+          resWork.json(),
           resSettings.json(),
           resUsers.json(),
         ]);
 
         if (dataUpdates.success) setStudentUpdates(dataUpdates.updates || []);
+        if (dataWork.success) setAssignedWork(dataWork.work || []);
         if (dataSettings.success) setSettings(dataSettings.settings || null);
         if (dataUsers.success) setUserCount((dataUsers.users || []).length);
       } catch {
@@ -60,6 +65,8 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
   }, [token]);
 
   const pendingCount = studentUpdates.filter((u) => u.status === 'pending').length;
+  const activeDirectivesCount = assignedWork.filter((w) => w.status === 'active').length;
+  const totalClaimsCount = assignedWork.reduce((acc, w) => acc + (w.claimsQueue?.length || 0), 0);
 
   return (
     <div className="w-full flex flex-col gap-6 animate-in fade-in duration-200">
@@ -76,8 +83,15 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => onNavigate('task_directives')}
+            className="px-3.5 py-1.5 rounded-lg bg-[#E50920] hover:bg-[#ff1e38] text-white text-xs font-mono font-medium transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <ListOrdered className="w-3.5 h-3.5" />
+            <span>Task Directives</span>
+          </button>
+          <button
             onClick={() => onNavigate('student_work')}
-            className="px-3.5 py-1.5 rounded-lg bg-[#E50920] hover:bg-[#ff1e38] text-white text-xs font-mono font-medium transition-colors cursor-pointer"
+            className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-mono transition-colors cursor-pointer"
           >
             Review Student Work
           </button>
@@ -90,8 +104,8 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
         </div>
       </div>
 
-      {/* ================= 2 CLEAN STATS CARDS ================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* ================= 3 CLEAN STATS CARDS ================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Card 1: Student Work */}
         <div
           onClick={() => onNavigate('student_work')}
@@ -115,7 +129,26 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
           </div>
         </div>
 
-        {/* Card 2: Accounts */}
+        {/* Card 2: Task Directives */}
+        <div
+          onClick={() => onNavigate('task_directives')}
+          className="p-5 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 hover:border-white/20 transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-2">
+            <span>Task Directives</span>
+            <ListOrdered className="w-4 h-4 text-[#E50920] group-hover:scale-110 transition-transform" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-white font-display">
+              {activeDirectivesCount}
+            </span>
+            <span className="text-xs font-mono text-emerald-400">
+              ({totalClaimsCount} queued claims)
+            </span>
+          </div>
+        </div>
+
+        {/* Card 3: Accounts */}
         <div
           onClick={() => onNavigate('accounts')}
           className="p-5 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 hover:border-white/20 transition-all cursor-pointer group"

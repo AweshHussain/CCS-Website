@@ -23,6 +23,12 @@ import {
   Code2,
   User,
   Trash2,
+  ListOrdered,
+  Lock,
+  Unlock,
+  Zap,
+  ChevronUp,
+  Check,
 } from 'lucide-react';
 import { DashboardBackground } from '../ui/DashboardBackground';
 import { UserProfilePage } from './UserProfilePage';
@@ -68,6 +74,7 @@ interface StudentUpdate {
   progressPercent: number;
   status: 'pending' | 'approved' | 'changes_requested';
   coordinatorFeedback?: string;
+  coordinatorName?: string;
   submittedAt: string;
   updatedAt: string;
 }
@@ -79,10 +86,24 @@ interface AssignedTask {
   domain: string;
   assignedByName: string;
   assignedByEmail: string;
+  assignedByRole?: string;
   assignedTo: string;
+  isOpenToAll?: boolean;
+  queueType?: string;
+  maxClaims?: number;
+  claimsQueue?: {
+    studentId: string;
+    studentName: string;
+    studentEmail: string;
+    department?: string;
+    claimedAt: string;
+    submissionId?: string;
+    status: string;
+    notes?: string;
+  }[];
   dueDate: string;
   priority: 'normal' | 'high' | 'urgent';
-  status: 'active' | 'completed' | 'archived';
+  status: 'active' | 'closed' | 'completed' | 'archived';
   createdAt: string;
 }
 
@@ -129,6 +150,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   const [demoUrl, setDemoUrl] = useState('');
   const [progressPercent, setProgressPercent] = useState<number>(30);
   const [savingProject, setSavingProject] = useState(false);
+  const [expandedStudentQueues, setExpandedStudentQueues] = useState<Record<string, boolean>>({});
+  const [claimingTaskId, setClaimingTaskId] = useState<string | null>(null);
+  const [refreshingTarget, setRefreshingTarget] = useState<'nav' | 'projects' | 'assigned' | null>(null);
 
   // Live User Profile with real-time permissions synchronization
   const [userProfile, setUserProfile] = useState<any>(currentUser);
@@ -252,6 +276,73 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
     }
   };
 
+  // First-Come, First-Served Task Claim
+  const handleClaimTask = async (task: AssignedTask, andOpenSubmit = false) => {
+    setClaimingTaskId(task.id);
+    setActionError('');
+    try {
+      const res = await fetch(`/api/coordinator/assigned-work/${task.id}/claim`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActionSuccess(data.message || 'Slot reserved in queue!');
+        setTimeout(() => setActionSuccess(''), 4500);
+        setAssignedTasks((prev) =>
+          prev.map((t) => (t.id === task.id ? data.task : t))
+        );
+        if (andOpenSubmit) {
+          setCurrentTab('my_projects');
+          handleOpenNewProject(task.title);
+        }
+      } else {
+        setActionError(data.message || 'Failed to claim task slot.');
+      }
+    } catch (err: any) {
+      setActionError(err.message || 'Error claiming task slot.');
+    } finally {
+      setClaimingTaskId(null);
+    }
+  };
+
+  // Release Claimed Task Slot
+  const handleReleaseClaim = async (task: AssignedTask) => {
+    if (!window.confirm(`Release your slot in the queue for "${task.title}"? Another student will be able to claim it.`)) {
+      return;
+    }
+    setClaimingTaskId(task.id);
+    setActionError('');
+    try {
+      const res = await fetch(`/api/coordinator/assigned-work/${task.id}/release-claim`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActionSuccess('You have surrendered your slot. Queue updated.');
+        setTimeout(() => setActionSuccess(''), 4000);
+        setAssignedTasks((prev) =>
+          prev.map((t) => (t.id === task.id ? data.task : t))
+        );
+      } else {
+        setActionError(data.message || 'Failed to release queue slot.');
+      }
+    } catch (err: any) {
+      setActionError(err.message || 'Error releasing queue slot.');
+    } finally {
+      setClaimingTaskId(null);
+    }
+  };
+
   // Close profile dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -291,6 +382,18 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
       // quiet catch
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Dedicated manual refresh with guaranteed smooth rotation animation for the specific clicked button
+  const handleManualRefresh = async (target: 'nav' | 'projects' | 'assigned') => {
+    if (refreshingTarget) return;
+    setRefreshingTarget(target);
+    const minSpinPromise = new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      await Promise.all([fetchData(), minSpinPromise]);
+    } finally {
+      setRefreshingTarget(null);
     }
   };
 
@@ -484,6 +587,16 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 </span>
               </button>
             )}
+
+            {/* Quick Refresh Icon in Tabs Bar */}
+            <button
+              onClick={() => handleManualRefresh('nav')}
+              disabled={Boolean(refreshingTarget)}
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0"
+              title="Refresh Data"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-[#E50920] ${refreshingTarget === 'nav' ? 'animate-spin' : ''}`} />
+            </button>
           </nav>
 
           {/* Right Profile Dropdown */}
@@ -616,13 +729,25 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 </p>
               </div>
 
-              <button
-                onClick={() => handleOpenNewProject()}
-                className="px-5 py-2.5 rounded-xl bg-[#E50920] hover:bg-[#ff1e38] text-white text-xs font-mono font-semibold transition-all duration-200 cursor-pointer flex items-center gap-2 shadow-lg shadow-[#E50920]/25"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Submit New Project Update</span>
-              </button>
+              <div className="flex items-center gap-2.5">
+                <button
+                  onClick={() => handleManualRefresh('projects')}
+                  disabled={Boolean(refreshingTarget)}
+                  className="px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white text-xs font-mono transition-colors cursor-pointer flex items-center gap-2"
+                  title="Refresh Projects and Feedback"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-[#E50920] ${refreshingTarget === 'projects' ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
+
+                <button
+                  onClick={() => handleOpenNewProject()}
+                  className="px-5 py-2.5 rounded-xl bg-[#E50920] hover:bg-[#ff1e38] text-white text-xs font-mono font-semibold transition-all duration-200 cursor-pointer flex items-center gap-2 shadow-lg shadow-[#E50920]/25"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Submit New Project Update</span>
+                </button>
+              </div>
             </div>
 
             {/* Project List */}
@@ -724,7 +849,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     {/* Coordinator Review Feedback Notes */}
                     {proj.coordinatorFeedback && (
                       <div className="p-3 rounded-lg bg-[#14151C]/90 border border-white/10 text-xs font-mono">
-                        <span className="text-emerald-400 font-semibold block mb-0.5">Coordinator Review Notes:</span>
+                        <span className="text-emerald-400 font-semibold block mb-0.5">
+                          {proj.coordinatorName ? `${proj.coordinatorName} (Coordinator):` : 'Coordinator:'}
+                        </span>
                         <p className="text-zinc-200">{proj.coordinatorFeedback}</p>
                       </div>
                     )}
@@ -735,73 +862,284 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           </div>
         )}
 
-        {/* ================= TAB 2: ASSIGNED WORK ================= */}
+        {/* ================= TAB 2: ASSIGNED WORK & DIRECTIVES ================= */}
         {currentTab === 'assigned_work' && (
           <div className="flex flex-col gap-6">
-            <div>
-              <h2 className="text-xl font-bold font-display text-white">Assigned Tasks & Directives</h2>
-              <p className="text-xs font-mono text-zinc-400 mt-0.5">
-                Engineering milestones and tasks assigned by Society Coordinators
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-xl font-bold font-display text-white">Assigned Tasks & Directives</h2>
+                  <span className="px-2 py-0.5 rounded-full bg-[#E50920]/20 text-[#E50920] border border-[#E50920]/30 text-[10px] font-mono uppercase font-bold tracking-wider">
+                    Open Enrollment
+                  </span>
+                </div>
+                <p className="text-xs font-mono text-zinc-400 mt-1">
+                  Engineering milestones issued by Society Coordinators • Open to all students with real-time queue slot reservation
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <button
+                  onClick={() => handleManualRefresh('assigned')}
+                  disabled={Boolean(refreshingTarget)}
+                  className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white text-xs font-mono transition-colors cursor-pointer flex items-center gap-2"
+                  title="Refresh Tasks and Queue Status"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-[#E50920] ${refreshingTarget === 'assigned' ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
+              </div>
             </div>
 
             {assignedTasks.length === 0 ? (
               <div className="p-12 text-center rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40">
                 <BookOpen className="w-8 h-8 text-zinc-500 mx-auto mb-2" />
-                <p className="text-sm font-mono text-zinc-400">No active tasks assigned right now.</p>
+                <p className="text-sm font-mono text-zinc-400">No active task directives published right now.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {assignedTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="p-5 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 flex flex-col gap-3"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="flex items-center gap-2.5">
-                        <h3 className="text-base font-bold font-display text-white">{task.title}</h3>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-mono uppercase ${
-                            task.priority === 'urgent'
-                              ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                              : task.priority === 'high'
-                              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                              : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                          }`}
-                        >
-                          {task.priority}
-                        </span>
+              <div className="grid grid-cols-1 gap-5">
+                {assignedTasks.map((task) => {
+                  const claims = task.claimsQueue || [];
+                  const capacity = task.maxClaims !== undefined ? task.maxClaims : 5;
+                  const isFull = capacity > 0 && claims.length >= capacity;
+                  const isClosed = task.status === 'closed' || task.status === 'archived';
+                  const myClaimIndex = claims.findIndex(
+                    (c) => c.studentId === currentUser.id || c.studentEmail === currentUser.email
+                  );
+                  const hasClaimed = myClaimIndex !== -1;
+                  const isExpanded = !!expandedStudentQueues[task.id];
+                  const percentFilled = capacity > 0 ? Math.min(100, Math.round((claims.length / capacity) * 100)) : 0;
+                  const isBusy = claimingTaskId === task.id;
+
+                  return (
+                    <div
+                      key={task.id}
+                      className="p-5 sm:p-6 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 flex flex-col gap-4 hover:border-white/20 transition-all"
+                    >
+                      {/* Top Row: Title, Badges, and Action Buttons */}
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <h3 className="text-base sm:text-lg font-bold font-display text-white">
+                              {task.title}
+                            </h3>
+
+                            {/* Priority Badge */}
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-mono uppercase font-semibold ${
+                                task.priority === 'urgent'
+                                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                  : task.priority === 'high'
+                                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                  : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                              }`}
+                            >
+                              {task.priority}
+                            </span>
+
+                            {/* Open to All Badge */}
+                            <span className="px-2 py-0.5 rounded-full bg-[#E50920]/15 text-[#E50920] border border-[#E50920]/30 text-[10px] font-mono font-bold flex items-center gap-1">
+                              <Sparkles className="w-2.5 h-2.5" />
+                              <span>Open to All</span>
+                            </span>
+
+                            {/* User Status Badge */}
+                            {hasClaimed && (
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-mono font-bold flex items-center gap-1 shadow-sm shadow-emerald-500/20">
+                                <Check className="w-3 h-3" />
+                                <span>Slot #{myClaimIndex + 1} Secured in Queue</span>
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-xs font-mono text-zinc-300 leading-relaxed">
+                            {task.description}
+                          </p>
+                        </div>
+
+                        {/* Interactive Buttons based on Claim Status */}
+                        <div className="flex flex-wrap items-center gap-2 shrink-0 self-start">
+                          {hasClaimed ? (
+                            <>
+                              <button
+                                onClick={() => {
+                                  setCurrentTab('my_projects');
+                                  handleOpenNewProject(task.title);
+                                }}
+                                className="px-4 py-2 rounded-lg bg-[#E50920] hover:bg-[#ff1e38] text-white text-xs font-mono font-medium transition-all shadow-md shadow-[#E50920]/30 cursor-pointer flex items-center gap-1.5"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>Submit Project for this Task</span>
+                              </button>
+
+                              <button
+                                onClick={() => handleReleaseClaim(task)}
+                                disabled={isBusy}
+                                className="px-3 py-2 rounded-lg bg-white/5 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 border border-white/10 hover:border-rose-500/30 text-xs font-mono transition-colors cursor-pointer"
+                                title="Surrender queue slot to another student"
+                              >
+                                Release Slot
+                              </button>
+                            </>
+                          ) : isClosed ? (
+                            <span className="px-4 py-2 rounded-lg bg-zinc-800/80 border border-white/10 text-zinc-500 text-xs font-mono">
+                              Directive Closed
+                            </span>
+                          ) : isFull ? (
+                            <span className="px-4 py-2 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono font-semibold">
+                              Queue Full
+                            </span>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleClaimTask(task, false)}
+                                disabled={isBusy}
+                                className="px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white text-xs font-mono font-medium transition-colors cursor-pointer flex items-center gap-1.5"
+                              >
+                                {isBusy ? (
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                                )}
+                                <span>Claim Slot</span>
+                              </button>
+
+                              <button
+                                onClick={() => handleClaimTask(task, true)}
+                                disabled={isBusy}
+                                className="px-4 py-2 rounded-lg bg-[#E50920] hover:bg-[#ff1e38] text-white text-xs font-mono font-medium transition-all shadow-md shadow-[#E50920]/30 cursor-pointer flex items-center gap-1.5"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>Claim & Submit Project</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
 
-                      <button
-                        onClick={() => {
-                          setCurrentTab('my_projects');
-                          handleOpenNewProject(task.title);
-                        }}
-                        className="self-start sm:self-auto px-4 py-2 rounded-lg bg-[#E50920] hover:bg-[#ff1e38] text-white text-xs font-mono font-medium transition-colors cursor-pointer flex items-center gap-1.5"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Submit Project for this Task</span>
-                      </button>
-                    </div>
-
-                    <p className="text-xs font-mono text-zinc-300 leading-relaxed">
-                      {task.description}
-                    </p>
-
-                    <div className="flex items-center gap-4 text-[11px] font-mono text-zinc-500 pt-2 border-t border-white/5">
-                      <span>Assigned By: <span className="text-zinc-300">{task.assignedByName}</span></span>
-                      <span>•</span>
-                      <span>Domain: <span className="text-[#E50920]">{task.domain}</span></span>
-                      {task.dueDate && (
-                        <>
+                      {/* Capacity Meter & Directive Details */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-3 border-y border-white/10 text-xs font-mono">
+                        <div className="flex flex-wrap items-center gap-3 text-zinc-400">
+                          <span>
+                            Assigned By: <span className="text-zinc-200">{task.assignedByName || 'Awesh Hussain'}</span> (Coordinator)
+                          </span>
                           <span>•</span>
-                          <span>Due: <span className="text-[#E50920]">{task.dueDate}</span></span>
-                        </>
-                      )}
+                          <span>
+                            Domain: <span className="text-[#E50920] font-semibold">{task.domain}</span>
+                          </span>
+                          {task.dueDate && (
+                            <>
+                              <span>•</span>
+                              <span>
+                                Due: <span className="text-amber-300">{task.dueDate}</span>
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Queue Progress Bar */}
+                        <div className="flex flex-col gap-1.5 justify-center">
+                          <div className="flex items-center justify-between text-[11px] font-mono">
+                            <span className="text-zinc-400 flex items-center gap-1.5">
+                              <Users className="w-3 h-3 text-zinc-400" />
+                              <span>Queue Slots Claimed:</span>
+                            </span>
+                            <span
+                              className={
+                                isFull
+                                  ? 'text-rose-400 font-bold'
+                                  : claims.length > 0
+                                  ? 'text-emerald-400 font-bold'
+                                  : 'text-zinc-400'
+                              }
+                            >
+                              {claims.length} / {capacity > 0 ? capacity : '∞'} {isFull && '(FULL)'}
+                            </span>
+                          </div>
+
+                          <div className="w-full bg-black/50 rounded-full h-1.5 overflow-hidden border border-white/10">
+                            <div
+                              className={`h-full transition-all duration-300 ${
+                                isFull
+                                  ? 'bg-rose-500'
+                                  : percentFilled > 60
+                                  ? 'bg-amber-400'
+                                  : 'bg-gradient-to-r from-[#E50920] to-emerald-400'
+                              }`}
+                              style={{ width: `${capacity > 0 ? percentFilled : 100}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Expandable Queue Roster */}
+                      <div>
+                        <button
+                          onClick={() =>
+                            setExpandedStudentQueues((prev) => ({ ...prev, [task.id]: !prev[task.id] }))
+                          }
+                          className="flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                        >
+                          <ListOrdered className="w-3.5 h-3.5 text-[#E50920]" />
+                          <span>
+                            Queue Roster ({claims.length} Student{claims.length !== 1 ? 's' : ''})
+                          </span>
+                          {isExpanded ? (
+                            <ChevronUp className="w-3.5 h-3.5 text-zinc-500" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+                          )}
+                        </button>
+
+                        {isExpanded && (
+                          <div className="mt-3 p-3 rounded-xl bg-black/40 border border-white/10 flex flex-col gap-2 animate-in fade-in">
+                            {claims.length === 0 ? (
+                              <p className="text-[11px] font-mono text-zinc-500 text-center py-2">
+                                No claims yet. Be the first to claim a slot in this queue!
+                              </p>
+                            ) : (
+                              <div className="divide-y divide-white/5">
+                                {claims.map((claim, idx) => {
+                                  const isMe =
+                                    claim.studentId === currentUser.id ||
+                                    claim.studentEmail === currentUser.email;
+
+                                  return (
+                                    <div
+                                      key={claim.studentId + idx}
+                                      className={`py-2 first:pt-0 last:pb-0 flex items-center justify-between text-xs font-mono ${
+                                        isMe ? 'text-emerald-400 font-semibold' : 'text-zinc-300'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2.5">
+                                        <div
+                                          className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 ${
+                                            isMe
+                                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                                              : 'bg-white/10 text-zinc-400'
+                                          }`}
+                                        >
+                                          #{idx + 1}
+                                        </div>
+                                        <span>
+                                          {claim.studentName} {isMe && '(You)'}
+                                        </span>
+                                      </div>
+
+                                      <span className="text-[10px] text-zinc-500">
+                                        {new Date(claim.claimedAt).toLocaleDateString()} {new Date(claim.claimedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

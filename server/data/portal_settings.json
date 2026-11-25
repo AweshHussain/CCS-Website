@@ -1,0 +1,11 @@
+{
+  "id": "main_settings",
+  "societyName": "Code & Compute Society (CCS)",
+  "announcementBanner": "🚀 Hackathon Season 2026 Submissions are now officially open!",
+  "isBannerActive": true,
+  "submissionSeasonOpen": true,
+  "allowedRegistrationDomain": "All Domains",
+  "notifyOnStudentSubmission": true,
+  "notifyOnFacultyQuery": true,
+  "updatedAt": "2026-11-24T19:34:58.661Z"
+}

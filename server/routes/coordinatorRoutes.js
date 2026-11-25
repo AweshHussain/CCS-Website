@@ -30,13 +30,14 @@ router.put('/student-updates/:id/status', requireRoles(['coordinator']), async (
   try {
     const { id } = req.params;
     const { status, coordinatorFeedback } = req.body;
+    const coordinatorName = req.body.coordinatorName || req.user?.fullName || req.user?.email || 'Coordinator';
 
     const validStatuses = ['pending', 'approved', 'changes_requested'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status value.' });
     }
 
-    const updated = await db.updateStudentSubmissionStatus(id, status, coordinatorFeedback || '');
+    const updated = await db.updateStudentSubmissionStatus(id, status, coordinatorFeedback || '', coordinatorName);
     if (!updated) {
       return res.status(404).json({ success: false, message: 'Submission not found.' });
     }
@@ -295,7 +296,7 @@ router.delete('/announcements/:id', async (req, res) => {
 });
 
 // ==============================================================
-// 5. Faculty Assigned Work & Tasks
+// 5. Coordinator Assigned Work & Tasks (FCFS Queue System)
 // ==============================================================
 
 // GET /api/coordinator/assigned-work - List all assigned tasks
@@ -312,14 +313,17 @@ router.get('/assigned-work', async (req, res) => {
   }
 });
 
-// POST /api/coordinator/assigned-work - Coordinator creates a work assignment
+// POST /api/coordinator/assigned-work - Coordinator creates a work assignment directive
 router.post('/assigned-work', requireRoles(['coordinator']), async (req, res) => {
   try {
-    const { title, description, domain, assignedTo, dueDate, priority } = req.body;
+    const { title, description, domain, assignedTo, dueDate, priority, isOpenToAll, maxClaims } = req.body;
 
     if (!title || !description) {
       return res.status(400).json({ success: false, message: 'Title and description are required.' });
     }
+
+    const openToAll = isOpenToAll !== false;
+    const capacity = maxClaims !== undefined ? Number(maxClaims) : 5;
 
     const created = await db.createAssignedWork({
       title: title.trim(),
@@ -327,14 +331,19 @@ router.post('/assigned-work', requireRoles(['coordinator']), async (req, res) =>
       domain: domain || 'General Systems',
       assignedByName: req.user.fullName || 'Student Coordinator',
       assignedByEmail: req.user.email,
-      assignedTo: assignedTo || 'All Students',
+      assignedByRole: 'Student Coordinator',
+      assignedTo: assignedTo || (openToAll ? 'All Students' : 'Target Engineering Squad'),
+      isOpenToAll: openToAll,
+      queueType: 'fcfs',
+      maxClaims: capacity,
+      claimsQueue: [],
       dueDate: dueDate || '',
       priority: priority || 'normal',
     });
 
     return res.status(201).json({
       success: true,
-      message: 'Work task assigned successfully to students.',
+      message: 'Work task directive published with queue capacity enabled.',
       task: created,
     });
   } catch (error) {
@@ -342,13 +351,45 @@ router.post('/assigned-work', requireRoles(['coordinator']), async (req, res) =>
   }
 });
 
+// PUT /api/coordinator/assigned-work/:id - Coordinator updates directive details
+router.put('/assigned-work/:id', requireRoles(['coordinator']), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, domain, assignedTo, dueDate, priority, isOpenToAll, maxClaims, status } = req.body;
+
+    const updates = {};
+    if (title) updates.title = title.trim();
+    if (description) updates.description = description.trim();
+    if (domain) updates.domain = domain;
+    if (assignedTo) updates.assignedTo = assignedTo;
+    if (dueDate !== undefined) updates.dueDate = dueDate;
+    if (priority) updates.priority = priority;
+    if (isOpenToAll !== undefined) updates.isOpenToAll = Boolean(isOpenToAll);
+    if (maxClaims !== undefined) updates.maxClaims = Number(maxClaims);
+    if (status) updates.status = status;
+
+    const updated = await db.updateAssignedWork(id, updates);
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Task directive not found.' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Task directive updated successfully.',
+      task: updated,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // PUT /api/coordinator/assigned-work/:id/status - Update work assignment status
-router.put('/assigned-work/:id/status', async (req, res) => {
+router.put('/assigned-work/:id/status', requireRoles(['coordinator']), async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    const valid = ['active', 'completed', 'archived'];
+    const valid = ['active', 'closed', 'completed', 'archived'];
     if (!valid.includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status.' });
     }
@@ -365,6 +406,51 @@ router.put('/assigned-work/:id/status', async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/coordinator/assigned-work/:id/claim - Student claims slot in FCFS queue
+router.post('/assigned-work/:id/claim', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { submissionId, notes } = req.body;
+
+    const result = await db.claimAssignedWork(id, {
+      studentId: req.user.id,
+      studentName: req.user.fullName || 'Student Builder',
+      studentEmail: req.user.email,
+      department: req.user.department || 'Computer Science & Engineering',
+      submissionId: submissionId || '',
+      notes: notes || '',
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Claim confirmed! You are position #${result.queuePosition} in the queue.`,
+      task: result.task,
+      queuePosition: result.queuePosition,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/coordinator/assigned-work/:id/release-claim - Release claim slot
+router.post('/assigned-work/:id/release-claim', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const targetStudentId = (req.user.role === 'coordinator' && req.body.studentId)
+      ? req.body.studentId
+      : req.user.id;
+
+    const result = await db.releaseAssignedWorkClaim(id, targetStudentId);
+    return res.status(200).json({
+      success: true,
+      message: 'Queue slot released successfully.',
+      task: result.task,
+    });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
   }
 });
 

@@ -66,6 +66,7 @@ export const PortalSettingsPanel: React.FC<PortalSettingsPanelProps> = ({
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsSuccess, setSettingsSuccess] = useState('');
   const [settingsError, setSettingsError] = useState('');
@@ -230,15 +231,21 @@ export const PortalSettingsPanel: React.FC<PortalSettingsPanelProps> = ({
         </div>
 
         <button
-          onClick={() => {
-            fetchSettings();
-            fetchAnnouncements();
+          onClick={async () => {
+            if (isRefreshing) return;
+            setIsRefreshing(true);
+            const minSpinPromise = new Promise((resolve) => setTimeout(resolve, 1000));
+            try {
+              await Promise.all([fetchSettings(), fetchAnnouncements(), minSpinPromise]);
+            } finally {
+              setIsRefreshing(false);
+            }
           }}
-          disabled={loading}
+          disabled={isRefreshing || loading}
           className="p-2 rounded-lg border border-white/10 hover:border-white/20 text-zinc-400 hover:text-white transition-colors cursor-pointer"
           title="Refresh Settings"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#E50920]' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 text-[#E50920] ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
 

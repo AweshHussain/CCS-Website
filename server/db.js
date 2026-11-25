@@ -75,6 +75,7 @@ const studentUpdateSchema = new mongoose.Schema(
     progressPercent: { type: Number, default: 0 },
     status: { type: String, enum: ['pending', 'approved', 'changes_requested'], default: 'pending' },
     coordinatorFeedback: { type: String, default: '' },
+    coordinatorName: { type: String, default: '' },
     submittedAt: { type: String, default: () => new Date().toISOString() },
     updatedAt: { type: String, default: () => new Date().toISOString() },
   },
@@ -142,7 +143,7 @@ const announcementSchema = new mongoose.Schema(
 export const AnnouncementModel = mongoose.models.Announcement || mongoose.model('Announcement', announcementSchema);
 
 // -------------------------------------------------------------
-// 6. Assigned Work Schema for MongoDB Atlas (Faculty assigns work to Students)
+// 6. Assigned Work Schema for MongoDB Atlas (Coordinators assign work to Students with FCFS Queue)
 // -------------------------------------------------------------
 const assignedWorkSchema = new mongoose.Schema(
   {
@@ -152,10 +153,26 @@ const assignedWorkSchema = new mongoose.Schema(
     domain: { type: String, default: 'General Systems' },
     assignedByName: { type: String, required: true },
     assignedByEmail: { type: String, required: true },
+    assignedByRole: { type: String, default: 'Student Coordinator' },
     assignedTo: { type: String, default: 'All Students' },
+    isOpenToAll: { type: Boolean, default: true },
+    queueType: { type: String, default: 'fcfs' },
+    maxClaims: { type: Number, default: 5 },
+    claimsQueue: [
+      {
+        studentId: String,
+        studentName: String,
+        studentEmail: String,
+        department: String,
+        claimedAt: { type: String, default: () => new Date().toISOString() },
+        submissionId: String,
+        status: { type: String, default: 'claimed' },
+        notes: String,
+      },
+    ],
     dueDate: { type: String, default: '' },
     priority: { type: String, enum: ['normal', 'high', 'urgent'], default: 'normal' },
-    status: { type: String, enum: ['active', 'completed', 'archived'], default: 'active' },
+    status: { type: String, enum: ['active', 'closed', 'completed', 'archived'], default: 'active' },
     createdAt: { type: String, default: () => new Date().toISOString() },
   },
   { collection: 'ccs_assigned_work' }
@@ -398,9 +415,14 @@ export const SEED_ASSIGNED_WORK = [
     title: 'Implement Multi-Agent LLM Orchestration with RAG',
     description: 'Design and benchmark a distributed retrieval-augmented pipeline using LangChain/LlamaIndex. Submit demo link and GitHub repository with latency and accuracy benchmarks.',
     domain: 'Artificial Intelligence & Systems',
-    assignedByName: 'Dr. Rajesh Sharma',
-    assignedByEmail: 'faculty@ccs-society.org',
+    assignedByName: 'Awesh Hussain',
+    assignedByEmail: 'coordinator@ccs-society.org',
+    assignedByRole: 'Student Coordinator',
     assignedTo: 'All Students',
+    isOpenToAll: true,
+    queueType: 'fcfs',
+    maxClaims: 3,
+    claimsQueue: [],
     dueDate: '2026-11-30',
     priority: 'high',
     status: 'active',
@@ -411,9 +433,14 @@ export const SEED_ASSIGNED_WORK = [
     title: 'Distributed WebSocket State Synchronizer',
     description: 'Develop a high-throughput WebSocket broadcast system with Redis pub/sub backplane to handle concurrent student terminal updates.',
     domain: 'Cloud Infrastructure & Networks',
-    assignedByName: 'Dr. Rajesh Sharma',
-    assignedByEmail: 'faculty@ccs-society.org',
+    assignedByName: 'Awesh Hussain',
+    assignedByEmail: 'coordinator@ccs-society.org',
+    assignedByRole: 'Student Coordinator',
     assignedTo: 'All Students',
+    isOpenToAll: true,
+    queueType: 'fcfs',
+    maxClaims: 5,
+    claimsQueue: [],
     dueDate: '2026-12-05',
     priority: 'normal',
     status: 'active',
@@ -587,6 +614,25 @@ export async function connectDB() {
     if (assignedWorkCount === 0) {
       console.log('📦 [Database] Seeding assigned work tasks into MongoDB Atlas...');
       await AssignedWorkModel.insertMany(SEED_ASSIGNED_WORK);
+    } else {
+      // Auto-migrate any existing records with Dr. Rajesh Sharma or missing FCFS fields
+      await AssignedWorkModel.updateMany(
+        { assignedByName: 'Dr. Rajesh Sharma' },
+        {
+          $set: {
+            assignedByName: 'Awesh Hussain',
+            assignedByRole: 'Student Coordinator',
+            assignedByEmail: 'coordinator@ccs-society.org',
+            assignedTo: 'All Students (FCFS Queue)',
+            isOpenToAll: true,
+            queueType: 'fcfs',
+          },
+        }
+      );
+      await AssignedWorkModel.updateMany(
+        { claimsQueue: { $exists: false } },
+        { $set: { claimsQueue: [], isOpenToAll: true, queueType: 'fcfs', maxClaims: 5 } }
+      );
     }
 
     // 7. Seed Groups
@@ -740,12 +786,12 @@ export const db = {
     return readJson(DB_UPDATES_FILE, SEED_STUDENT_UPDATES);
   },
 
-  updateStudentSubmissionStatus: async (id, status, coordinatorFeedback = '') => {
+  updateStudentSubmissionStatus: async (id, status, coordinatorFeedback = '', coordinatorName = '') => {
     if (isMongoConnected) {
       try {
         const updated = await StudentUpdateModel.findOneAndUpdate(
           { id },
-          { status, coordinatorFeedback, updatedAt: new Date().toISOString() },
+          { status, coordinatorFeedback, coordinatorName, updatedAt: new Date().toISOString() },
           { new: true }
         ).lean();
         if (updated) return updated;
@@ -759,6 +805,9 @@ export const db = {
     if (idx === -1) return null;
     local[idx].status = status;
     local[idx].coordinatorFeedback = coordinatorFeedback;
+    if (coordinatorName) {
+      local[idx].coordinatorName = coordinatorName;
+    }
     local[idx].updatedAt = new Date().toISOString();
     writeJson(DB_UPDATES_FILE, local);
     return local[idx];
@@ -953,16 +1002,28 @@ export const db = {
     return true;
   },
 
-  // --- Assigned Work & Directives ---
+  // --- Assigned Work & Directives (FCFS Queue Enabled) ---
   getAssignedWork: async () => {
+    const sanitizeWork = (items) =>
+      items.map((w) => ({
+        ...w,
+        isOpenToAll: w.isOpenToAll !== undefined ? w.isOpenToAll : true,
+        queueType: w.queueType || 'fcfs',
+        maxClaims: w.maxClaims !== undefined ? w.maxClaims : 5,
+        claimsQueue: Array.isArray(w.claimsQueue) ? w.claimsQueue : [],
+        assignedByRole: w.assignedByRole || 'Student Coordinator',
+      }));
+
     if (isMongoConnected) {
       try {
-        return await AssignedWorkModel.find({}).sort({ createdAt: -1 }).lean();
+        const docs = await AssignedWorkModel.find({}).sort({ createdAt: -1 }).lean();
+        return sanitizeWork(docs);
       } catch (err) {
         console.error('Mongo getAssignedWork error:', err.message);
       }
     }
-    return readJson(DB_ASSIGNED_WORK_FILE, SEED_ASSIGNED_WORK);
+    const local = readJson(DB_ASSIGNED_WORK_FILE, SEED_ASSIGNED_WORK);
+    return sanitizeWork(local);
   },
 
   createAssignedWork: async (data) => {
@@ -970,6 +1031,11 @@ export const db = {
       id: `work-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
       createdAt: new Date().toISOString(),
       status: 'active',
+      isOpenToAll: data.isOpenToAll !== undefined ? data.isOpenToAll : true,
+      queueType: 'fcfs',
+      maxClaims: data.maxClaims !== undefined ? Number(data.maxClaims) : 5,
+      claimsQueue: [],
+      assignedByRole: data.assignedByRole || 'Student Coordinator',
       ...data,
     };
 
@@ -986,6 +1052,28 @@ export const db = {
     local.unshift(newWork);
     writeJson(DB_ASSIGNED_WORK_FILE, local);
     return newWork;
+  },
+
+  updateAssignedWork: async (id, updates) => {
+    if (isMongoConnected) {
+      try {
+        const updated = await AssignedWorkModel.findOneAndUpdate(
+          { id },
+          { $set: updates },
+          { new: true }
+        ).lean();
+        if (updated) return updated;
+      } catch (err) {
+        console.error('Mongo updateAssignedWork error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_ASSIGNED_WORK_FILE, SEED_ASSIGNED_WORK);
+    const idx = local.findIndex((w) => w.id === id);
+    if (idx === -1) return null;
+    local[idx] = { ...local[idx], ...updates, updatedAt: new Date().toISOString() };
+    writeJson(DB_ASSIGNED_WORK_FILE, local);
+    return local[idx];
   },
 
   updateAssignedWorkStatus: async (id, status) => {
@@ -1024,6 +1112,133 @@ export const db = {
     const filtered = local.filter((w) => w.id !== id);
     writeJson(DB_ASSIGNED_WORK_FILE, filtered);
     return true;
+  },
+
+  // First-Come, First-Served (FCFS) Claim Slot for Assigned Work
+  claimAssignedWork: async (id, studentData) => {
+    let task = null;
+
+    if (isMongoConnected) {
+      try {
+        task = await AssignedWorkModel.findOne({ id }).lean();
+      } catch (err) {
+        console.error('Mongo claimAssignedWork find error:', err.message);
+      }
+    }
+
+    if (!task) {
+      const local = readJson(DB_ASSIGNED_WORK_FILE, SEED_ASSIGNED_WORK);
+      task = local.find((w) => w.id === id);
+    }
+
+    if (!task) {
+      throw new Error('Task directive not found.');
+    }
+
+    if (task.status === 'closed' || task.status === 'archived') {
+      throw new Error('This task directive is closed and no longer accepting claims.');
+    }
+
+    const claims = Array.isArray(task.claimsQueue) ? [...task.claimsQueue] : [];
+
+    // Check if student already claimed
+    const existingIndex = claims.findIndex(
+      (c) => c.studentId === studentData.studentId || c.studentEmail === studentData.studentEmail
+    );
+    if (existingIndex !== -1) {
+      throw new Error(`You have already secured a slot in this queue (#${existingIndex + 1}).`);
+    }
+
+    const maxCapacity = task.maxClaims !== undefined ? Number(task.maxClaims) : 5;
+    if (maxCapacity > 0 && claims.length >= maxCapacity) {
+      throw new Error(`Queue is full for this directive (Capacity: ${maxCapacity} slots claimed).`);
+    }
+
+    const newClaim = {
+      studentId: studentData.studentId,
+      studentName: studentData.studentName || 'Student Builder',
+      studentEmail: studentData.studentEmail || '',
+      department: studentData.department || 'Computer Science & Engineering',
+      claimedAt: new Date().toISOString(),
+      submissionId: studentData.submissionId || '',
+      status: studentData.submissionId ? 'submitted' : 'claimed',
+      notes: studentData.notes || '',
+    };
+
+    claims.push(newClaim);
+    const queuePosition = claims.length;
+
+    if (isMongoConnected) {
+      try {
+        const updated = await AssignedWorkModel.findOneAndUpdate(
+          { id },
+          { $set: { claimsQueue: claims } },
+          { new: true }
+        ).lean();
+        return { task: updated || { ...task, claimsQueue: claims }, queuePosition };
+      } catch (err) {
+        console.error('Mongo claimAssignedWork update error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_ASSIGNED_WORK_FILE, SEED_ASSIGNED_WORK);
+    const idx = local.findIndex((w) => w.id === id);
+    if (idx !== -1) {
+      local[idx].claimsQueue = claims;
+      writeJson(DB_ASSIGNED_WORK_FILE, local);
+      return { task: local[idx], queuePosition };
+    }
+
+    return { task: { ...task, claimsQueue: claims }, queuePosition };
+  },
+
+  // Release FCFS Claim Slot
+  releaseAssignedWorkClaim: async (id, studentId) => {
+    let task = null;
+
+    if (isMongoConnected) {
+      try {
+        task = await AssignedWorkModel.findOne({ id }).lean();
+      } catch (err) {
+        console.error('Mongo releaseAssignedWorkClaim find error:', err.message);
+      }
+    }
+
+    if (!task) {
+      const local = readJson(DB_ASSIGNED_WORK_FILE, SEED_ASSIGNED_WORK);
+      task = local.find((w) => w.id === id);
+    }
+
+    if (!task) {
+      throw new Error('Task directive not found.');
+    }
+
+    const claims = (Array.isArray(task.claimsQueue) ? task.claimsQueue : []).filter(
+      (c) => c.studentId !== studentId
+    );
+
+    if (isMongoConnected) {
+      try {
+        const updated = await AssignedWorkModel.findOneAndUpdate(
+          { id },
+          { $set: { claimsQueue: claims } },
+          { new: true }
+        ).lean();
+        return { success: true, task: updated || { ...task, claimsQueue: claims } };
+      } catch (err) {
+        console.error('Mongo releaseAssignedWorkClaim error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_ASSIGNED_WORK_FILE, SEED_ASSIGNED_WORK);
+    const idx = local.findIndex((w) => w.id === id);
+    if (idx !== -1) {
+      local[idx].claimsQueue = claims;
+      writeJson(DB_ASSIGNED_WORK_FILE, local);
+      return { success: true, task: local[idx] };
+    }
+
+    return { success: true, task: { ...task, claimsQueue: claims } };
   },
 
   // -------------------------------------------------------------

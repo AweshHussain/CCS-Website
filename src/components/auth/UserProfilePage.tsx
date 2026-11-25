@@ -4,7 +4,6 @@ import {
   Mail,
   Shield,
   Clock,
-  RefreshCw,
   LogOut,
   CheckCircle2,
   Copy,
@@ -214,24 +213,6 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
               Session automatically resets and logs out every 10 hours for security.
             </p>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          {session.refreshSuccess && (
-            <span className="text-[11px] font-mono text-emerald-400">✓ Extended</span>
-          )}
-          {session.refreshError && (
-            <span className="text-[11px] font-mono text-rose-400">⚠️ {session.refreshError}</span>
-          )}
-          <button
-            onClick={() => session.refreshSession()}
-            disabled={session.isRefreshing}
-            className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/15 text-white text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5"
-            title="Reset 10-Hour Session"
-          >
-            <RefreshCw className={`w-3 h-3 ${session.isRefreshing ? 'animate-spin' : ''}`} />
-            <span>{session.isRefreshing ? 'Resetting...' : 'Reset 10h'}</span>
-          </button>
         </div>
       </div>
 

@@ -38,6 +38,7 @@ import { CoordinatorLandingPage } from './CoordinatorLandingPage';
 import { ChangePasswordModal } from './ChangePasswordModal';
 import { ChangeEmailModal } from './ChangeEmailModal';
 import { StudentWorkPanel } from './StudentWorkPanel';
+import { CoordinatorTaskDirectivesPanel } from './CoordinatorTaskDirectivesPanel';
 import { PortalSettingsPanel } from './PortalSettingsPanel';
 import { StudentDashboard } from './StudentDashboard';
 import { DashboardBackground } from '../ui/DashboardBackground';
@@ -135,6 +136,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showChangeEmailModal, setShowChangeEmailModal] = useState(false);
   const [pendingSubmissionsCount, setPendingSubmissionsCount] = useState(0);
+  const [activeDirectivesCount, setActiveDirectivesCount] = useState(0);
   const [totalUsersCount, setTotalUsersCount] = useState(0);
 
   // Poll/fetch badges when logged in
@@ -142,13 +144,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
     if (!authToken || !currentUser) return;
     const fetchCounts = async () => {
       try {
-        const [resSub, resU] = await Promise.all([
+        const [resSub, resDir, resU] = await Promise.all([
           fetch('/api/coordinator/student-updates', { headers: { Authorization: `Bearer ${authToken}` } }),
+          fetch('/api/coordinator/assigned-work', { headers: { Authorization: `Bearer ${authToken}` } }),
           fetch('/api/admin/users', { headers: { Authorization: `Bearer ${authToken}` } }),
         ]);
-        const [dataSub, dataU] = await Promise.all([resSub.json(), resU.json()]);
+        const [dataSub, dataDir, dataU] = await Promise.all([resSub.json(), resDir.json(), resU.json()]);
         if (dataSub.success) {
           setPendingSubmissionsCount((dataSub.updates || []).filter((u: any) => u.status === 'pending').length);
+        }
+        if (dataDir.success) {
+          setActiveDirectivesCount((dataDir.work || []).filter((w: any) => w.status === 'active').length);
         }
         if (dataU.success) {
           setTotalUsersCount((dataU.users || []).length);
@@ -333,6 +339,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
           onBackToHome={onBackToHome}
           onLogout={handleLogout}
           pendingSubmissionsCount={pendingSubmissionsCount}
+          activeDirectivesCount={activeDirectivesCount}
           totalUsersCount={totalUsersCount}
         />
 
@@ -350,7 +357,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
           {coordinatorTab === 'student_work' && (
             <StudentWorkPanel
               token={authToken!}
+              currentUser={currentUser}
               onCountUpdate={(cnt) => setPendingSubmissionsCount(cnt)}
+            />
+          )}
+
+          {coordinatorTab === 'task_directives' && (
+            <CoordinatorTaskDirectivesPanel
+              token={authToken!}
+              currentUser={currentUser}
+              onCountUpdate={(cnt) => setActiveDirectivesCount(cnt)}
             />
           )}
 

@@ -14,12 +14,14 @@ import {
   Camera,
   RefreshCw,
   Clock,
+  ListOrdered,
 } from 'lucide-react';
 import { useSessionTimer } from '../../utils/sessionSecurity';
 
 export type CoordinatorTabType =
   | 'dashboard'
   | 'student_work'
+  | 'task_directives'
   | 'accounts'
   | 'settings';
 
@@ -41,6 +43,7 @@ interface CoordinatorNavbarProps {
   onBackToHome: () => void;
   onLogout: () => void;
   pendingSubmissionsCount?: number;
+  activeDirectivesCount?: number;
   totalUsersCount?: number;
 }
 
@@ -55,6 +58,7 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
   onBackToHome,
   onLogout,
   pendingSubmissionsCount = 0,
+  activeDirectivesCount = 0,
   totalUsersCount = 0,
 }) => {
   const [profileOpen, setProfileOpen] = useState(false);
@@ -112,6 +116,12 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
       label: 'Student Work',
       icon: FolderGit2,
       count: pendingSubmissionsCount,
+    },
+    {
+      id: 'task_directives' as CoordinatorTabType,
+      label: 'Task Directives',
+      icon: ListOrdered,
+      count: activeDirectivesCount,
     },
   ];
 
@@ -261,7 +271,31 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
 
               {/* Clean Menu Items */}
               <div className="py-2 flex flex-col gap-1">
-                {/* 1. Accounts */}
+                {/* 1. Task Directives */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileOpen(false);
+                    onSelectTab('task_directives');
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-mono transition-colors cursor-pointer text-left ${
+                    currentTab === 'task_directives'
+                      ? 'bg-[#E50920]/15 text-[#E50920] border border-[#E50920]/30 font-semibold'
+                      : 'text-zinc-300 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <ListOrdered className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>Task Directives</span>
+                  </div>
+                  {activeDirectivesCount > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-[#E50920]/20 text-[#E50920] text-[10px] font-mono font-semibold">
+                      {activeDirectivesCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* 2. Accounts */}
                 <button
                   type="button"
                   onClick={() => {
@@ -285,7 +319,7 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
                   )}
                 </button>
 
-                {/* 2. Settings */}
+                {/* 3. Settings */}
                 <button
                   type="button"
                   onClick={() => {

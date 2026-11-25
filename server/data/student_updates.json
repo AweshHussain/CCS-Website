@@ -1,5 +1,39 @@
 [
   {
+    "id": "update-1795581512574-guh9t",
+    "submittedAt": "2026-11-25T04:38:32.574Z",
+    "updatedAt": "2026-11-25T04:38:48.591Z",
+    "status": "approved",
+    "coordinatorFeedback": "",
+    "studentName": "Muntassar Rehan",
+    "studentEmail": "muntassar1@gmail.com",
+    "department": "Computer Science & Engineering",
+    "projectTitle": "Implement Multi-Agent LLM Orchestration with RAG",
+    "description": "completed",
+    "domain": "Full-Stack Web & Systems",
+    "githubUrl": "",
+    "demoUrl": "",
+    "progressPercent": 100,
+    "coordinatorName": "Awesh Hussain"
+  },
+  {
+    "id": "update-1795577590865-rh45e",
+    "submittedAt": "2026-11-25T03:33:10.865Z",
+    "updatedAt": "2026-11-25T03:33:46.159Z",
+    "status": "pending",
+    "coordinatorFeedback": "you can make the visuals better",
+    "coordinatorName": "Awesh Hussain",
+    "studentName": "Minhaj Hussain",
+    "studentEmail": "minhaj1@gmail.com",
+    "department": "Computer Science & Engineering",
+    "projectTitle": "Chakravat Manthan",
+    "description": "Cyclone Prediction model",
+    "domain": "Artificial Intelligence & Systems",
+    "githubUrl": "",
+    "demoUrl": "",
+    "progressPercent": 5
+  },
+  {
     "id": "update-1",
     "studentName": "Aarav Mehta",
     "studentEmail": "aarav.mehta@ccs-society.org",
@@ -9,11 +43,11 @@
     "domain": "AI/ML Systems",
     "githubUrl": "https://github.com/ccs-society/neuromesh",
     "demoUrl": "https://neuromesh.ccs-society.org",
-    "progressPercent": 85,
+    "progressPercent": 80,
     "status": "pending",
     "coordinatorFeedback": "",
     "submittedAt": "2026-11-15T16:19:39.679Z",
-    "updatedAt": "2026-11-15T20:19:39.681Z"
+    "updatedAt": "2026-11-25T03:23:27.905Z"
   },
   {
     "id": "update-2",

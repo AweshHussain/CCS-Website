@@ -1,5 +1,29 @@
 [
   {
+    "id": "act-1795577590889-zgba9",
+    "timestamp": "2026-11-25T03:33:10.889Z",
+    "actionType": "milestone",
+    "details": "Progress milestone at 5%. Domain: Artificial Intelligence & Systems.",
+    "link": "",
+    "groupId": "group-1795577119746-vnnt",
+    "userId": "user-1795577287879-71ms0w",
+    "userName": "Minhaj Hussain",
+    "userAvatar": "",
+    "title": "Submitted project: Chakravat Manthan"
+  },
+  {
+    "id": "act-1795577007928-qa1n3",
+    "timestamp": "2026-11-25T03:23:27.928Z",
+    "actionType": "milestone",
+    "details": "Progress milestone at 80%. Domain: AI/ML Systems.",
+    "link": "https://github.com/ccs-society/neuromesh",
+    "groupId": "group-1",
+    "userId": "user-student-1",
+    "userName": "Aarav Mehta",
+    "userAvatar": "",
+    "title": "Updated milestone on NeuroMesh — Distributed Vector Indexing Engine"
+  },
+  {
     "id": "act-seed-1",
     "groupId": "group-1",
     "userId": "user-student-1",

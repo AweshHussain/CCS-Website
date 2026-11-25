@@ -1,12 +1,11 @@
 import React from 'react';
-import { Floating3DLogo } from '../3d/Floating3DLogo';
 import { ParticleBackground } from './ParticleBackground';
 
 interface DashboardBackgroundProps {
   role?: 'coordinator' | 'student';
 }
 
-export const DashboardBackground: React.FC<DashboardBackgroundProps> = ({ role = 'coordinator' }) => {
+export const DashboardBackground: React.FC<DashboardBackgroundProps> = () => {
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none">
       {/* Deep Ambient Crimson Lighting (same as landing page hero glows) */}
@@ -16,22 +15,6 @@ export const DashboardBackground: React.FC<DashboardBackgroundProps> = ({ role =
 
       {/* Canvas Floating Particles & Sparks (identical to landing page) */}
       <ParticleBackground theme="dark" reducedMotion={false} />
-
-      {/* 3D Rotating CCS Emblem Watermark in the Center */}
-      <div className="fixed inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-        {/* Ambient red halo behind 3D logo */}
-        <div className="w-[450px] h-[450px] sm:w-[550px] sm:h-[550px] rounded-full bg-[#E50920]/14 blur-[130px] pointer-events-none" />
-
-        {/* 3D Model Instance floating in background */}
-        <div className="absolute w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] opacity-25 pointer-events-none">
-          <Floating3DLogo
-            isWatermark={true}
-            theme="dark"
-            authPhase="dashboard"
-            selectedRole={role}
-          />
-        </div>
-      </div>
     </div>
   );
 };
