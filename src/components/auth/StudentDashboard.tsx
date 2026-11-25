@@ -546,11 +546,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             className="flex items-center gap-3 text-left group cursor-pointer focus:outline-none"
             title="Go to CCS Home"
           >
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[#E50920]/25 via-black/80 to-black border border-[#E50920]/40 flex items-center justify-center p-1.5 shadow-md shadow-[#E50920]/25 group-hover:border-[#E50920] group-hover:scale-105 transition-all shrink-0">
+            <div className="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center transition-transform duration-300 group-hover:scale-105 shrink-0">
               <img
                 src="/ccs_emblem_white.png"
                 alt="CCS Emblem"
-                className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(229,9,32,0.6)] group-hover:brightness-125 transition-all"
+                className="w-full h-full object-contain filter group-hover:brightness-125 transition-all"
               />
             </div>
             <div>
