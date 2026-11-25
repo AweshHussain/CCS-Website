@@ -495,6 +495,154 @@ router.post('/messages/direct/:teammateId', async (req, res) => {
 });
 
 // ============================================================================
+// 10A. PUT /api/team/messages/:messageId - Edit a Message
+// ============================================================================
+router.put('/messages/:messageId', async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { content } = req.body;
+    const currentUserId = req.user.id;
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ success: false, message: 'Message content cannot be empty.' });
+    }
+
+    const message = await db.getMessageById(messageId);
+    if (!message) {
+      return res.status(404).json({ success: false, message: 'Message not found.' });
+    }
+
+    // Only the author can edit their own message
+    if (message.senderId !== currentUserId) {
+      return res.status(403).json({ success: false, message: 'You can only edit your own messages.' });
+    }
+
+    const updated = await db.updateMessageContent(messageId, content.trim());
+
+    // Broadcast edit to relevant rooms
+    const io = req.app.get('io');
+    if (io) {
+      if (message.type === 'group' && message.groupId) {
+        io.to(`group_${message.groupId}`).emit('team_message_edited', updated);
+      } else if (message.type === 'direct') {
+        io.to(`user_${message.senderId}`).emit('direct_message_edited', updated);
+        io.to(`user_${message.recipientId}`).emit('direct_message_edited', updated);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Message edited successfully.',
+      chatMessage: updated,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ============================================================================
+// 10B. DELETE /api/team/messages/:messageId - Delete a Single Message
+// ============================================================================
+router.delete('/messages/:messageId', async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const currentUserId = req.user.id;
+    const isCoordinator = req.user.role === 'coordinator';
+
+    const message = await db.getMessageById(messageId);
+    if (!message) {
+      return res.status(404).json({ success: false, message: 'Message not found.' });
+    }
+
+    // Author or Coordinator can delete
+    if (message.senderId !== currentUserId && !isCoordinator) {
+      return res.status(403).json({ success: false, message: 'You are not authorized to delete this message.' });
+    }
+
+    await db.deleteMessage(messageId);
+
+    // Broadcast delete event
+    const io = req.app.get('io');
+    if (io) {
+      if (message.type === 'group' && message.groupId) {
+        io.to(`group_${message.groupId}`).emit('team_message_deleted', { messageId, type: 'group', groupId: message.groupId });
+      } else if (message.type === 'direct') {
+        io.to(`user_${message.senderId}`).emit('direct_message_deleted', { messageId, type: 'direct', senderId: message.senderId, recipientId: message.recipientId });
+        io.to(`user_${message.recipientId}`).emit('direct_message_deleted', { messageId, type: 'direct', senderId: message.senderId, recipientId: message.recipientId });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Message deleted successfully.',
+      messageId,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ============================================================================
+// 10C. DELETE /api/team/messages/clear/group/:groupId - Clear Group Chat History
+// ============================================================================
+router.delete('/messages/clear/group/:groupId', async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const currentUser = req.user;
+
+    const group = await db.getGroupById(groupId);
+    if (!group) {
+      return res.status(404).json({ success: false, message: 'Group not found.' });
+    }
+
+    const isMember = group.members.some((m) => m.studentId === currentUser.id);
+    const isCoordinator = currentUser.role === 'coordinator';
+    if (!isMember && !isCoordinator) {
+      return res.status(403).json({ success: false, message: 'Not authorized to clear this group chat.' });
+    }
+
+    await db.clearGroupMessages(groupId);
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`group_${groupId}`).emit('team_chat_cleared', { groupId, type: 'group' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Group chat history cleared successfully.',
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ============================================================================
+// 10D. DELETE /api/team/messages/clear/direct/:teammateId - Clear Direct Chat
+// ============================================================================
+router.delete('/messages/clear/direct/:teammateId', async (req, res) => {
+  try {
+    const { teammateId } = req.params;
+    const currentUserId = req.user.id;
+
+    await db.clearDirectMessages(currentUserId, teammateId);
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user_${teammateId}`).emit('direct_chat_cleared', { user1Id: currentUserId, user2Id: teammateId });
+      io.to(`user_${currentUserId}`).emit('direct_chat_cleared', { user1Id: currentUserId, user2Id: teammateId });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Private chat history cleared successfully.',
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ============================================================================
 // 11. GET /api/team/activities/:groupId - Live Project Activity Feed
 // ============================================================================
 router.get('/activities/:groupId', async (req, res) => {

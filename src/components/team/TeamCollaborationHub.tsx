@@ -19,6 +19,9 @@ import {
   CheckCircle2,
   AlertTriangle,
   FolderGit2,
+  Trash2,
+  Edit2,
+  Check,
 } from 'lucide-react';
 import { getTeamSocket } from '../../services/teamSocket';
 
@@ -63,6 +66,8 @@ interface ChatMessage {
   recipientId?: string;
   content: string;
   attachments?: any[];
+  isEdited?: boolean;
+  editedAt?: string;
   createdAt: string;
 }
 
@@ -113,6 +118,12 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [typingUser, setTypingUser] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Edit Message State
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
+  const [isUpdatingMessage, setIsUpdatingMessage] = useState(false);
+  const [isClearingChat, setIsClearingChat] = useState(false);
 
   // Post Activity Modal State
   const [showActivityModal, setShowActivityModal] = useState(false);
@@ -297,8 +308,43 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
       setTypingUser(null);
     };
 
+    const handleTeamMessageEdited = (updatedMsg: ChatMessage) => {
+      setGroupMessages((prev) => prev.map((m) => (m.id === updatedMsg.id ? updatedMsg : m)));
+    };
+
+    const handleDirectMessageEdited = (updatedMsg: ChatMessage) => {
+      setDirectMessages((prev) => prev.map((m) => (m.id === updatedMsg.id ? updatedMsg : m)));
+    };
+
+    const handleTeamMessageDeleted = ({ messageId }: { messageId: string }) => {
+      setGroupMessages((prev) => prev.filter((m) => m.id !== messageId));
+    };
+
+    const handleDirectMessageDeleted = ({ messageId }: { messageId: string }) => {
+      setDirectMessages((prev) => prev.filter((m) => m.id !== messageId));
+    };
+
+    const handleTeamChatCleared = () => {
+      setGroupMessages([]);
+    };
+
+    const handleDirectChatCleared = ({ user1Id, user2Id }: { user1Id: string; user2Id: string }) => {
+      if (
+        (user1Id === currentUser.id && user2Id === activeTeammate?.id) ||
+        (user2Id === currentUser.id && user1Id === activeTeammate?.id)
+      ) {
+        setDirectMessages([]);
+      }
+    };
+
     socket.on('new_team_message', handleNewTeamMessage);
     socket.on('new_direct_message', handleNewDirectMessage);
+    socket.on('team_message_edited', handleTeamMessageEdited);
+    socket.on('direct_message_edited', handleDirectMessageEdited);
+    socket.on('team_message_deleted', handleTeamMessageDeleted);
+    socket.on('direct_message_deleted', handleDirectMessageDeleted);
+    socket.on('team_chat_cleared', handleTeamChatCleared);
+    socket.on('direct_chat_cleared', handleDirectChatCleared);
     socket.on('new_team_activity', handleNewActivity);
     socket.on('teammate_presence', handleTeammatePresence);
     socket.on('presence_update', handleTeammatePresence);
@@ -309,6 +355,12 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
     return () => {
       socket.off('new_team_message', handleNewTeamMessage);
       socket.off('new_direct_message', handleNewDirectMessage);
+      socket.off('team_message_edited', handleTeamMessageEdited);
+      socket.off('direct_message_edited', handleDirectMessageEdited);
+      socket.off('team_message_deleted', handleTeamMessageDeleted);
+      socket.off('direct_message_deleted', handleDirectMessageDeleted);
+      socket.off('team_chat_cleared', handleTeamChatCleared);
+      socket.off('direct_chat_cleared', handleDirectChatCleared);
       socket.off('new_team_activity', handleNewActivity);
       socket.off('teammate_presence', handleTeammatePresence);
       socket.off('presence_update', handleTeammatePresence);
@@ -365,6 +417,96 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
       console.warn('Failed to send message:', err);
     } finally {
       setIsSendingMessage(false);
+    }
+  };
+
+  // Edit Message Handler
+  const handleSaveEdit = async (messageId: string) => {
+    if (!editingContent.trim() || isUpdatingMessage) return;
+    setIsUpdatingMessage(true);
+    try {
+      const res = await fetch(`/api/team/messages/${messageId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content: editingContent.trim() }),
+      });
+      const data = await res.json();
+      if (data.success && data.chatMessage) {
+        if (chatMode === 'group') {
+          setGroupMessages((prev) => prev.map((m) => (m.id === messageId ? data.chatMessage : m)));
+        } else {
+          setDirectMessages((prev) => prev.map((m) => (m.id === messageId ? data.chatMessage : m)));
+        }
+        setEditingMessageId(null);
+        setEditingContent('');
+      } else {
+        alert(data.message || 'Failed to update message.');
+      }
+    } catch (err) {
+      console.warn('Error updating message:', err);
+    } finally {
+      setIsUpdatingMessage(false);
+    }
+  };
+
+  // Delete Single Message Handler
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!window.confirm('Delete this message?')) return;
+    try {
+      const res = await fetch(`/api/team/messages/${messageId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (chatMode === 'group') {
+          setGroupMessages((prev) => prev.filter((m) => m.id !== messageId));
+        } else {
+          setDirectMessages((prev) => prev.filter((m) => m.id !== messageId));
+        }
+      } else {
+        alert(data.message || 'Failed to delete message.');
+      }
+    } catch (err) {
+      console.warn('Error deleting message:', err);
+    }
+  };
+
+  // Clear Chat History Handler
+  const handleClearChat = async () => {
+    const isGroup = chatMode === 'group';
+    const targetName = isGroup ? (group?.name || 'Group Chat') : (activeTeammate?.fullName || 'Private Chat');
+    if (!window.confirm(`Are you sure you want to clear all chat messages for ${targetName}? This cannot be undone.`)) {
+      return;
+    }
+
+    setIsClearingChat(true);
+    try {
+      const url = isGroup
+        ? `/api/team/messages/clear/group/${group?.id}`
+        : `/api/team/messages/clear/direct/${activeTeammate?.id}`;
+
+      const res = await fetch(url, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (isGroup) {
+          setGroupMessages([]);
+        } else {
+          setDirectMessages([]);
+        }
+      } else {
+        alert(data.message || 'Failed to clear chat.');
+      }
+    } catch (err) {
+      console.warn('Error clearing chat:', err);
+    } finally {
+      setIsClearingChat(false);
     }
   };
 
@@ -857,16 +999,32 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
               </div>
             )}
 
-            {/* Chat Target Subtitle */}
-            <div className="py-2 text-[11px] font-mono text-zinc-400 flex items-center justify-between">
-              {chatMode === 'group' ? (
-                <span>Talking to: <strong className="text-white">{group?.name}</strong></span>
-              ) : activeTeammate ? (
-                <span>Private thread: <strong className="text-white">{activeTeammate.fullName}</strong></span>
-              ) : (
-                <span>Select a teammate to message</span>
+            {/* Chat Target Subtitle and Action Header */}
+            <div className="py-2 text-[11px] font-mono text-zinc-400 flex items-center justify-between gap-2 border-b border-white/5">
+              <div className="flex items-center gap-1.5 overflow-hidden">
+                {chatMode === 'group' ? (
+                  <span className="truncate">Talking to: <strong className="text-white">{group?.name}</strong></span>
+                ) : activeTeammate ? (
+                  <span className="truncate">Private thread: <strong className="text-white">{activeTeammate.fullName}</strong></span>
+                ) : (
+                  <span>Select a teammate to message</span>
+                )}
+                {typingUser && <span className="text-[10px] text-[#E50920] animate-pulse shrink-0 hidden sm:inline">({typingUser} typing...)</span>}
+              </div>
+
+              {/* Clear Chat Button */}
+              {((chatMode === 'group' && groupMessages.length > 0) || (chatMode === 'direct' && directMessages.length > 0)) && (
+                <button
+                  type="button"
+                  onClick={handleClearChat}
+                  disabled={isClearingChat}
+                  title="Clear conversation history"
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono text-zinc-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all cursor-pointer shrink-0 disabled:opacity-50"
+                >
+                  <Trash2 className="w-3 h-3 text-red-400/80" />
+                  <span className="hidden xs:inline sm:inline">Clear Chat</span>
+                </button>
               )}
-              {typingUser && <span className="text-[10px] text-[#E50920] animate-pulse">{typingUser} is typing...</span>}
             </div>
 
             {/* Message History Container (internal scrolling only) */}
@@ -879,25 +1037,88 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                 ) : (
                   groupMessages.map((msg) => {
                     const isMe = msg.senderId === currentUser.id;
+                    const isEditing = editingMessageId === msg.id;
                     return (
                       <div
                         key={msg.id}
-                        className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
+                        className={`flex flex-col group/msg ${isMe ? 'items-end' : 'items-start'}`}
                       >
                         <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-400 mb-0.5 px-1">
                           <span className={isMe ? 'text-[#E50920] font-bold' : 'text-zinc-300'}>{msg.senderName}</span>
                           <span>•</span>
                           <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          {msg.isEdited && <span className="text-zinc-500 italic text-[9px]">(edited)</span>}
                         </div>
-                        <div
-                          className={`max-w-[85%] p-3 rounded-2xl text-xs font-sans leading-relaxed whitespace-pre-wrap break-words ${
-                            isMe
-                              ? 'bg-[#E50920] text-white rounded-tr-sm shadow-md shadow-[#E50920]/20'
-                              : 'bg-zinc-800/90 text-zinc-100 rounded-tl-sm border border-white/10'
-                          }`}
-                        >
-                          {msg.content}
-                        </div>
+
+                        {isEditing ? (
+                          <div className="w-full max-w-[95%] sm:max-w-[85%] p-2 rounded-xl bg-black/80 border border-[#E50920]/40 flex flex-col gap-2">
+                            <textarea
+                              value={editingContent}
+                              onChange={(e) => setEditingContent(e.target.value)}
+                              className="w-full p-2 rounded-lg bg-zinc-900 text-xs text-white border border-white/10 focus:border-[#E50920] focus:outline-none resize-none font-sans"
+                              rows={2}
+                              autoFocus
+                            />
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingMessageId(null);
+                                  setEditingContent('');
+                                }}
+                                className="px-2 py-1 rounded text-[10px] font-mono text-zinc-400 hover:text-white cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSaveEdit(msg.id)}
+                                disabled={isUpdatingMessage || !editingContent.trim()}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#E50920] hover:bg-[#ff1e38] text-white text-[10px] font-mono font-semibold transition-all cursor-pointer disabled:opacity-50"
+                              >
+                                <Check className="w-3 h-3" />
+                                <span>Save</span>
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="relative group/bubble max-w-[92%] sm:max-w-[85%] flex items-start gap-1">
+                            {/* Actions for sender (Edit / Delete) */}
+                            {isMe && (
+                              <div className="opacity-0 group-hover/msg:opacity-100 flex items-center gap-0.5 self-center shrink-0 transition-opacity bg-black/60 p-0.5 rounded-lg border border-white/10">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingMessageId(msg.id);
+                                    setEditingContent(msg.content);
+                                  }}
+                                  title="Edit message"
+                                  className="p-1 hover:text-white text-zinc-400 hover:bg-white/10 rounded transition-colors cursor-pointer"
+                                >
+                                  <Edit2 className="w-2.5 h-2.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteMessage(msg.id)}
+                                  title="Delete message"
+                                  className="p-1 hover:text-red-400 text-zinc-400 hover:bg-red-500/10 rounded transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="w-2.5 h-2.5" />
+                                </button>
+                              </div>
+                            )}
+
+                            <div
+                              className={`p-2.5 sm:p-3 rounded-2xl text-xs font-sans leading-relaxed whitespace-pre-wrap break-words ${
+                                isMe
+                                  ? 'bg-[#E50920] text-white rounded-tr-sm shadow-md shadow-[#E50920]/20'
+                                  : 'bg-zinc-800/90 text-zinc-100 rounded-tl-sm border border-white/10'
+                              }`}
+                            >
+                              {msg.content}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })
@@ -911,25 +1132,88 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                 ) : (
                   directMessages.map((msg) => {
                     const isMe = msg.senderId === currentUser.id;
+                    const isEditing = editingMessageId === msg.id;
                     return (
                       <div
                         key={msg.id}
-                        className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
+                        className={`flex flex-col group/msg ${isMe ? 'items-end' : 'items-start'}`}
                       >
                         <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-400 mb-0.5 px-1">
                           <span className={isMe ? 'text-[#E50920] font-bold' : 'text-zinc-300'}>{msg.senderName}</span>
                           <span>•</span>
                           <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          {msg.isEdited && <span className="text-zinc-500 italic text-[9px]">(edited)</span>}
                         </div>
-                        <div
-                          className={`max-w-[85%] p-3 rounded-2xl text-xs font-sans leading-relaxed whitespace-pre-wrap break-words ${
-                            isMe
-                              ? 'bg-[#E50920] text-white rounded-tr-sm shadow-md shadow-[#E50920]/20'
-                              : 'bg-zinc-800/90 text-zinc-100 rounded-tl-sm border border-white/10'
-                          }`}
-                        >
-                          {msg.content}
-                        </div>
+
+                        {isEditing ? (
+                          <div className="w-full max-w-[95%] sm:max-w-[85%] p-2 rounded-xl bg-black/80 border border-[#E50920]/40 flex flex-col gap-2">
+                            <textarea
+                              value={editingContent}
+                              onChange={(e) => setEditingContent(e.target.value)}
+                              className="w-full p-2 rounded-lg bg-zinc-900 text-xs text-white border border-white/10 focus:border-[#E50920] focus:outline-none resize-none font-sans"
+                              rows={2}
+                              autoFocus
+                            />
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingMessageId(null);
+                                  setEditingContent('');
+                                }}
+                                className="px-2 py-1 rounded text-[10px] font-mono text-zinc-400 hover:text-white cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSaveEdit(msg.id)}
+                                disabled={isUpdatingMessage || !editingContent.trim()}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#E50920] hover:bg-[#ff1e38] text-white text-[10px] font-mono font-semibold transition-all cursor-pointer disabled:opacity-50"
+                              >
+                                <Check className="w-3 h-3" />
+                                <span>Save</span>
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="relative group/bubble max-w-[92%] sm:max-w-[85%] flex items-start gap-1">
+                            {/* Actions for sender (Edit / Delete) */}
+                            {isMe && (
+                              <div className="opacity-0 group-hover/msg:opacity-100 flex items-center gap-0.5 self-center shrink-0 transition-opacity bg-black/60 p-0.5 rounded-lg border border-white/10">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingMessageId(msg.id);
+                                    setEditingContent(msg.content);
+                                  }}
+                                  title="Edit message"
+                                  className="p-1 hover:text-white text-zinc-400 hover:bg-white/10 rounded transition-colors cursor-pointer"
+                                >
+                                  <Edit2 className="w-2.5 h-2.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteMessage(msg.id)}
+                                  title="Delete message"
+                                  className="p-1 hover:text-red-400 text-zinc-400 hover:bg-red-500/10 rounded transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="w-2.5 h-2.5" />
+                                </button>
+                              </div>
+                            )}
+
+                            <div
+                              className={`p-2.5 sm:p-3 rounded-2xl text-xs font-sans leading-relaxed whitespace-pre-wrap break-words ${
+                                isMe
+                                  ? 'bg-[#E50920] text-white rounded-tr-sm shadow-md shadow-[#E50920]/20'
+                                  : 'bg-zinc-800/90 text-zinc-100 rounded-tl-sm border border-white/10'
+                              }`}
+                            >
+                              {msg.content}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })

@@ -1330,6 +1330,98 @@ export const db = {
     return newMsg;
   },
 
+  getMessageById: async (id) => {
+    if (isMongoConnected) {
+      try {
+        return await TeamMessageModel.findOne({ id }).lean();
+      } catch (err) {
+        console.error('Mongo getMessageById error:', err.message);
+      }
+    }
+    const local = readJson(DB_MESSAGES_FILE, SEED_TEAM_MESSAGES);
+    return local.find((m) => m.id === id) || null;
+  },
+
+  updateMessageContent: async (id, newContent) => {
+    const updatedAt = new Date().toISOString();
+    if (isMongoConnected) {
+      try {
+        const updated = await TeamMessageModel.findOneAndUpdate(
+          { id },
+          { content: newContent, isEdited: true, editedAt: updatedAt },
+          { new: true }
+        ).lean();
+        if (updated) return updated;
+      } catch (err) {
+        console.error('Mongo updateMessageContent error:', err.message);
+      }
+    }
+
+    const local = readJson(DB_MESSAGES_FILE, SEED_TEAM_MESSAGES);
+    const idx = local.findIndex((m) => m.id === id);
+    if (idx === -1) return null;
+    local[idx].content = newContent;
+    local[idx].isEdited = true;
+    local[idx].editedAt = updatedAt;
+    writeJson(DB_MESSAGES_FILE, local);
+    return local[idx];
+  },
+
+  deleteMessage: async (id) => {
+    if (isMongoConnected) {
+      try {
+        await TeamMessageModel.deleteOne({ id });
+      } catch (err) {
+        console.error('Mongo deleteMessage error:', err.message);
+      }
+    }
+    const local = readJson(DB_MESSAGES_FILE, SEED_TEAM_MESSAGES);
+    const filtered = local.filter((m) => m.id !== id);
+    writeJson(DB_MESSAGES_FILE, filtered);
+    return true;
+  },
+
+  clearGroupMessages: async (groupId) => {
+    if (isMongoConnected) {
+      try {
+        await TeamMessageModel.deleteMany({ type: 'group', groupId });
+      } catch (err) {
+        console.error('Mongo clearGroupMessages error:', err.message);
+      }
+    }
+    const local = readJson(DB_MESSAGES_FILE, SEED_TEAM_MESSAGES);
+    const filtered = local.filter((m) => !(m.type === 'group' && m.groupId === groupId));
+    writeJson(DB_MESSAGES_FILE, filtered);
+    return true;
+  },
+
+  clearDirectMessages: async (user1Id, user2Id) => {
+    if (isMongoConnected) {
+      try {
+        await TeamMessageModel.deleteMany({
+          type: 'direct',
+          $or: [
+            { senderId: user1Id, recipientId: user2Id },
+            { senderId: user2Id, recipientId: user1Id },
+          ],
+        });
+      } catch (err) {
+        console.error('Mongo clearDirectMessages error:', err.message);
+      }
+    }
+    const local = readJson(DB_MESSAGES_FILE, SEED_TEAM_MESSAGES);
+    const filtered = local.filter(
+      (m) =>
+        !(
+          m.type === 'direct' &&
+          ((m.senderId === user1Id && m.recipientId === user2Id) ||
+            (m.senderId === user2Id && m.recipientId === user1Id))
+        )
+    );
+    writeJson(DB_MESSAGES_FILE, filtered);
+    return true;
+  },
+
   // -------------------------------------------------------------
   // --- Team Live Activity Feed ---
   // -------------------------------------------------------------
