@@ -1,14 +1,11 @@
 import 'dotenv/config';
 import app from '../server/app.js';
-import { connectDB } from '../server/db.js';
-
-let isConnected = false;
+import { connectDB, db } from '../server/db.js';
 
 export default async function handler(req, res) {
-  if (!isConnected) {
+  if (!db.isCloudConnected()) {
     try {
       await connectDB();
-      isConnected = true;
     } catch (err) {
       console.error('[Vercel Serverless] DB connection error:', err.message);
     }
