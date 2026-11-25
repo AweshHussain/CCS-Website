@@ -143,6 +143,8 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
   const [newPassword, setNewPassword] = useState('');
   const [newFullName, setNewFullName] = useState('');
   const [newDepartment, setNewDepartment] = useState('');
+  const [sendWelcomeEmail, setSendWelcomeEmail] = useState(true);
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
@@ -267,6 +269,7 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
         fullName: newFullName.trim() || newEmail.split('@')[0],
         role: newRole,
         department: newDepartment.trim() || (newRole === 'coordinator' ? 'Operations & Executive Core' : 'Engineering Core'),
+        sendEmail: sendWelcomeEmail,
       };
 
       if (newRole === 'student') {
@@ -290,7 +293,12 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
       const data = await res.json();
       if (data.success) {
         const plainPass = newPassword;
-        setSuccessMessage(`New credentials created for ${newFullName || newEmail}! Credentials: [Email: ${newEmail.trim()} | Password: ${plainPass}]`);
+        const mailNote = data.emailDispatched
+          ? ' • Welcome email sent!'
+          : data.emailSimulated
+          ? ' • Email drafted & logged to console'
+          : '';
+        setSuccessMessage(`New credentials created for ${newFullName || newEmail}! Credentials: [Email: ${newEmail.trim()} | Password: ${plainPass}]${mailNote}`);
         setNewEmail('');
         setNewPassword('');
         setNewFullName('');
@@ -305,6 +313,32 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
       setError(err.message || 'Failed to connect to backend.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Resend Welcome Credentials Email
+  const handleResendCredentialsEmail = async (userId: string, userFullName: string) => {
+    setSendingEmailId(userId);
+    setError('');
+    setSuccessMessage('');
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/resend-credentials`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccessMessage(data.message || `Credentials email dispatched to ${userFullName}!`);
+      } else {
+        setError(data.message || 'Failed to dispatch credentials email.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Network error dispatching email.');
+    } finally {
+      setSendingEmailId(null);
     }
   };
 
@@ -933,6 +967,27 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
                         )}
                       </button>
 
+                      {/* 4b. Send/Resend Welcome Credentials Email */}
+                      {user.password && (
+                        <button
+                          onClick={() => handleResendCredentialsEmail(user.id, user.fullName)}
+                          disabled={sendingEmailId === user.id}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-mono transition-all cursor-pointer ${
+                            theme === 'light'
+                              ? 'bg-red-50 hover:bg-red-100 border-[#E50920]/30 text-[#E50920]'
+                              : 'bg-[#E50920]/10 hover:bg-[#E50920]/20 border-[#E50920]/30 text-[#FF4D5E]'
+                          }`}
+                          title={`Email login credentials to ${user.email} with your name as coordinator`}
+                        >
+                          {sendingEmailId === user.id ? (
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Send className="w-3.5 h-3.5" />
+                          )}
+                          <span>Email</span>
+                        </button>
+                      )}
+
                       {/* 5. Delete Account Button */}
                       {!isMe && (
                         <button
@@ -1463,6 +1518,32 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
               )}
             </div>
           )}
+
+          {/* Dispatch Welcome Credentials Email Toggle */}
+          <div className="p-4 rounded-xl border border-white/10 bg-black/40 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#E50920]/15 text-[#E50920] border border-[#E50920]/30 flex items-center justify-center shrink-0">
+                <Send className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-semibold text-white block">
+                  Dispatch Welcome Email with Login Credentials
+                </span>
+                <span className="text-[11px] font-mono text-zinc-400 block">
+                  Sends an automated welcome email containing their login email, password, and portal link with your coordinator name as issuer.
+                </span>
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+              <input
+                type="checkbox"
+                checked={sendWelcomeEmail}
+                onChange={(e) => setSendWelcomeEmail(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#E50920]"></div>
+            </label>
+          </div>
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
             <button

@@ -8,6 +8,7 @@ import { db } from '../db.js';
 import { verifyToken, requireRoles } from '../middleware/auth.js';
 import { encryptPassword, decryptPassword } from '../utils/crypto.js';
 import { isUserOnline } from '../presence.js';
+import { sendWelcomeCredentialsEmail } from '../services/emailService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -96,7 +97,7 @@ router.get('/users', async (req, res) => {
 // POST /api/admin/users - Admin directly creates an account, storing password as BCRYPT HASH + AES-256 VAULT CIPHER
 router.post('/users', async (req, res) => {
   try {
-    const { email, password, fullName, role, department, groupOption, existingGroupId, newGroupName } = req.body;
+    const { email, password, fullName, role, department, groupOption, existingGroupId, newGroupName, sendEmail } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Email and password are required.' });
@@ -158,9 +159,28 @@ router.post('/users', async (req, res) => {
       }
     }
 
+    // Optional: Dispatch Welcome Email with credentials on behalf of current coordinator
+    let emailResult = null;
+    if (sendEmail !== false) {
+      try {
+        emailResult = await sendWelcomeCredentialsEmail({
+          recipientEmail: newUser.email,
+          recipientName: newUser.fullName,
+          role: assignedRole,
+          plainPassword: password,
+          coordinatorName: req.user.fullName || 'Lead Coordinator',
+          coordinatorRole: req.user.role === 'coordinator' ? 'Student Coordinator' : 'Society Coordinator',
+          coordinatorEmail: req.user.email,
+        });
+      } catch (mailErr) {
+        console.warn('Welcome email dispatch warning:', mailErr.message);
+        emailResult = { success: false, error: mailErr.message };
+      }
+    }
+
     return res.status(201).json({
       success: true,
-      message: `New credentials created for ${newUser.fullName} (${assignedRole}).`,
+      message: `New credentials created for ${newUser.fullName} (${assignedRole}).${emailResult?.success ? ' Welcome email dispatched!' : ''}`,
       user: {
         id: newUser.id,
         email: newUser.email,
@@ -173,6 +193,8 @@ router.post('/users', async (req, res) => {
       },
       // Plain password returned so admin can immediately copy and provide to student
       issuedPassword: password,
+      emailDispatched: emailResult?.success || false,
+      emailSimulated: emailResult?.simulated || false,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -301,6 +323,56 @@ router.post('/users/:id/avatar', upload.single('avatar'), async (req, res) => {
         role: updated.role,
         avatarUrl: updated.avatarUrl,
       },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ============================================================================
+// POST /api/admin/users/:id/resend-credentials - Resend Welcome Email
+// ============================================================================
+router.post('/users/:id/resend-credentials', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await db.findUserById(id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    let plainPassword = '';
+    if (user.vaultCipher) {
+      try {
+        plainPassword = decryptPassword(user.vaultCipher);
+      } catch (decErr) {
+        console.warn('Decrypt password error:', decErr.message);
+      }
+    }
+
+    if (!plainPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Decrypted password is not available in vault for this user. You can update their password and resend.',
+      });
+    }
+
+    const emailResult = await sendWelcomeCredentialsEmail({
+      recipientEmail: user.email,
+      recipientName: user.fullName,
+      role: user.role,
+      plainPassword,
+      coordinatorName: req.user.fullName || 'Lead Coordinator',
+      coordinatorRole: req.user.role === 'coordinator' ? 'Student Coordinator' : 'Society Coordinator',
+      coordinatorEmail: req.user.email,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: emailResult.simulated
+        ? `Credentials email logged to console (SMTP not configured). Recipient: ${user.email}`
+        : `Credentials email dispatched successfully to ${user.email}!`,
+      emailDispatched: emailResult.success,
+      emailSimulated: emailResult.simulated || false,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
