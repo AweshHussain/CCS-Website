@@ -302,6 +302,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
   };
 
   const handleLogout = () => {
+    if (authToken) {
+      fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authToken}` },
+      }).catch(() => {});
+    }
     localStorage.removeItem('ccs_jwt_token');
     localStorage.removeItem('ccs_session_issued_at');
     localStorage.removeItem('ccs_current_user');

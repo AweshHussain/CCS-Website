@@ -91,11 +91,26 @@ export const Floating3DLogo: React.FC<Floating3DLogoProps> = ({
             color="#FFFFFF"
           />
 
-          {/* Rim lighting: Crimson accent in light mode, pure crisp white in dark mode */}
+          {/* Rim lighting: Crisp intense white grazing on 3D geometric edges */}
           <directionalLight
-            position={[0, 4, -5]}
-            intensity={theme === 'light' ? 3.5 : 2.5}
-            color={theme === 'light' ? '#E50920' : '#FFFFFF'}
+            position={[0, 5, -5]}
+            intensity={theme === 'light' ? 4.5 : 3.8}
+            color="#FFFFFF"
+          />
+          <directionalLight
+            position={[0, -5, -4]}
+            intensity={theme === 'light' ? 3.5 : 3.0}
+            color={theme === 'light' ? '#FF2238' : '#FFFFFF'}
+          />
+          <directionalLight
+            position={[-5, 0, 4]}
+            intensity={3.0}
+            color="#FFFFFF"
+          />
+          <directionalLight
+            position={[5, 0, 4]}
+            intensity={3.0}
+            color="#FFFFFF"
           />
 
           {/* Gentle fill light from below */}
@@ -116,9 +131,9 @@ export const Floating3DLogo: React.FC<Floating3DLogoProps> = ({
 
           {/* 3D Floating Mesh */}
           <Float
-            speed={reducedMotion || authPhase !== 'idle' ? 0 : 1.5}
-            rotationIntensity={reducedMotion || authPhase !== 'idle' ? 0 : 0.2}
-            floatIntensity={reducedMotion || authPhase !== 'idle' ? 0 : 0.3}
+            speed={reducedMotion || (authPhase !== 'idle' && authPhase !== 'dashboard') ? 0 : 1.5}
+            rotationIntensity={reducedMotion || (authPhase !== 'idle' && authPhase !== 'dashboard') ? 0 : 0.2}
+            floatIntensity={reducedMotion || (authPhase !== 'idle' && authPhase !== 'dashboard') ? 0 : 0.3}
             floatingRange={[-0.1, 0.1]}
           >
             <LogoMesh

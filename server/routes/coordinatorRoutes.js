@@ -1,6 +1,7 @@
 import express from 'express';
 import { db } from '../db.js';
 import { verifyToken, requireRoles } from '../middleware/auth.js';
+import { isUserOnline, getOnlineUserIds } from '../presence.js';
 
 const router = express.Router();
 
@@ -15,10 +16,28 @@ router.use(verifyToken);
 router.get('/student-updates', async (req, res) => {
   try {
     const updates = await db.getStudentUpdates();
+    const enrichedUpdates = updates.map((u) => ({
+      ...u,
+      isOnline: isUserOnline(u.studentId),
+    }));
     return res.status(200).json({
       success: true,
-      count: updates.length,
-      updates,
+      count: enrichedUpdates.length,
+      updates: enrichedUpdates,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// GET /api/coordinator/presence - Realtime online users presence roster
+router.get('/presence', requireRoles(['coordinator']), async (req, res) => {
+  try {
+    const onlineUserIds = getOnlineUserIds();
+    return res.status(200).json({
+      success: true,
+      onlineUserIds,
+      count: onlineUserIds.length,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -254,12 +273,16 @@ router.post('/announcements', async (req, res) => {
       });
     }
 
-    const { message } = req.body;
+    const { message, target } = req.body;
     if (!message || !message.trim()) {
       return res.status(400).json({ success: false, message: 'Announcement text is required.' });
     }
+    const validTargets = ['all', 'public', 'students', 'teams'];
+    const selectedTarget = validTargets.includes(target) ? target : 'all';
+
     const created = await db.createAnnouncement({
       message: message.trim(),
+      target: selectedTarget,
       authorName: req.user.fullName || (req.user.role === 'coordinator' ? 'Lead Coordinator' : 'Student Member'),
     });
     return res.status(201).json({
@@ -303,10 +326,17 @@ router.delete('/announcements/:id', async (req, res) => {
 router.get('/assigned-work', async (req, res) => {
   try {
     const work = await db.getAssignedWork();
+    const enrichedWork = work.map((w) => ({
+      ...w,
+      claimsQueue: (w.claimsQueue || []).map((c) => ({
+        ...c,
+        isOnline: isUserOnline(c.studentId),
+      })),
+    }));
     return res.status(200).json({
       success: true,
-      count: work.length,
-      work,
+      count: enrichedWork.length,
+      work: enrichedWork,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

@@ -328,8 +328,8 @@ export function App() {
         )}
       </div>
 
-      {/* Floating Announcement Icon on Right Side of Screen (Hidden during intro sequence and login) */}
-      {!showIntro && currentView !== 'login' && <FloatingAnnouncement />}
+      {/* Floating Announcement Icon on Right Side of Screen (Hidden during intro sequence) */}
+      {!showIntro && <FloatingAnnouncement />}
     </div>
   );
 }

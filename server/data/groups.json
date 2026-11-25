@@ -30,11 +30,12 @@
     "description": "To build a cyclone prediction model",
     "memberIds": [
       "user-1795577287879-71ms0w",
-      "user-1795579060505-g3ovm1"
+      "user-1795579060505-g3ovm1",
+      "user-1795585672561-p0br82"
     ],
     "maxCapacity": 4,
     "createdById": "user-coordinator-1",
     "createdAt": "2026-11-25T03:25:19.746Z",
-    "updatedAt": "2026-11-25T03:57:40.511Z"
+    "updatedAt": "2026-11-25T05:47:52.566Z"
   }
 ]

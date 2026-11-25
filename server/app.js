@@ -54,10 +54,14 @@ app.get('/api/announcement', async (req, res) => {
 app.get('/api/announcements', async (req, res) => {
   try {
     const announcements = await db.getAnnouncements();
+    const target = req.query.target;
+    const filtered = target
+      ? announcements.filter((a) => a.target === target || a.target === 'all' || !a.target)
+      : announcements;
     return res.status(200).json({
       success: true,
-      count: announcements.length,
-      announcements,
+      count: filtered.length,
+      announcements: filtered,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

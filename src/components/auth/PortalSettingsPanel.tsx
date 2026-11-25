@@ -11,6 +11,9 @@ import {
   Send,
   Clock,
   Sparkles,
+  Globe,
+  Users,
+  GraduationCap,
 } from 'lucide-react';
 
 interface PortalSettings {
@@ -27,6 +30,7 @@ interface PortalSettings {
 interface Announcement {
   id: string;
   message: string;
+  target?: 'all' | 'public' | 'students' | 'teams';
   authorName?: string;
   createdAt: string;
 }
@@ -62,6 +66,8 @@ export const PortalSettingsPanel: React.FC<PortalSettingsPanelProps> = ({
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [newAnnouncementText, setNewAnnouncementText] = useState('');
+  const [selectedTarget, setSelectedTarget] = useState<'all' | 'public' | 'students' | 'teams'>('all');
+  const [filterTarget, setFilterTarget] = useState<'any' | 'all' | 'public' | 'students' | 'teams'>('any');
   const [postingAnnouncement, setPostingAnnouncement] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -163,7 +169,10 @@ export const PortalSettingsPanel: React.FC<PortalSettingsPanelProps> = ({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ message: newAnnouncementText.trim() }),
+        body: JSON.stringify({
+          message: newAnnouncementText.trim(),
+          target: selectedTarget,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -287,6 +296,43 @@ export const PortalSettingsPanel: React.FC<PortalSettingsPanelProps> = ({
           </div>
         </div>
 
+        {/* Destination Target Selector */}
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-mono text-zinc-300 font-semibold uppercase flex items-center justify-between">
+            <span>Broadcast Destination / Target Display:</span>
+            <span className="text-[10px] text-zinc-500 font-normal lowercase">Choose where this update will be seen</span>
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {[
+              { id: 'public', label: 'Main Page', sub: 'Public Visitors', icon: Globe, activeClass: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-sm' },
+              { id: 'teams', label: 'Team Squads', sub: 'Teams Hub', icon: Users, activeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-sm' },
+              { id: 'students', label: 'All Students', sub: 'Student Portal', icon: GraduationCap, activeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/50 shadow-sm' },
+              { id: 'all', label: 'Everywhere', sub: 'Global Broadcast', icon: Radio, activeClass: 'bg-[#E50920]/20 text-[#E50920] border-[#E50920]/50 shadow-sm' },
+            ].map((dest) => {
+              const Icon = dest.icon;
+              const isSelected = selectedTarget === dest.id;
+              return (
+                <button
+                  key={dest.id}
+                  type="button"
+                  onClick={() => setSelectedTarget(dest.id as any)}
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-1 ${
+                    isSelected
+                      ? dest.activeClass
+                      : 'bg-black/40 border-white/10 text-zinc-400 hover:text-white hover:border-white/20'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 font-semibold text-xs font-mono">
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span>{dest.label}</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-zinc-400 block truncate">{dest.sub}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Input box to create new announcement */}
         <form onSubmit={handlePostAnnouncement} className="flex flex-col sm:flex-row gap-3">
           <input
@@ -317,25 +363,75 @@ export const PortalSettingsPanel: React.FC<PortalSettingsPanelProps> = ({
 
         {/* Active Announcements List with Delete Option */}
         <div className="pt-2 flex flex-col gap-2.5">
-          <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">
-            Current Active Updates ({announcements.length})
-          </span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1 border-b border-white/5">
+            <span className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider">
+              Current Active Updates ({announcements.length})
+            </span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {[
+                { id: 'any', label: 'All' },
+                { id: 'public', label: '🌐 Main Page' },
+                { id: 'teams', label: '👥 Teams' },
+                { id: 'students', label: '🎓 Students' },
+                { id: 'all', label: '📢 Everywhere' },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFilterTarget(f.id as any)}
+                  className={`px-2 py-0.5 rounded-lg text-[10px] font-mono transition-colors cursor-pointer ${
+                    filterTarget === f.id
+                      ? 'bg-white/15 text-white font-semibold border border-white/20'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {announcements.length === 0 ? (
             <div className="p-4 rounded-lg bg-black/30 border border-white/5 text-center text-xs font-mono text-zinc-500">
-              No active announcements. Post an update above to display on the public site.
+              No active announcements. Post an update above to broadcast to selected destinations.
             </div>
           ) : (
             <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-              {announcements.map((item, idx) => (
+              {announcements
+                .filter((item) => {
+                  if (filterTarget === 'any') return true;
+                  if (filterTarget === 'all') return item.target === 'all' || !item.target;
+                  return item.target === filterTarget;
+                })
+                .map((item, idx) => (
                 <div
                   key={item.id}
                   className="p-3.5 rounded-lg bg-black/40 border border-white/10 hover:border-white/20 transition-all flex items-start justify-between gap-3 group"
                 >
-                  <div className="flex-1 flex flex-col gap-1">
-                    <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-400">
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-400 flex-wrap">
                       <span className="text-[#E50920] font-semibold">
                         #{announcements.length - idx}
+                      </span>
+                      {/* Destination Badge */}
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-semibold uppercase tracking-wider border ${
+                          item.target === 'public'
+                            ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30'
+                            : item.target === 'teams'
+                            ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                            : item.target === 'students'
+                            ? 'bg-purple-500/15 text-purple-400 border-purple-500/30'
+                            : 'bg-[#E50920]/15 text-[#E50920] border-[#E50920]/30'
+                        }`}
+                      >
+                        {item.target === 'public'
+                          ? '🌐 Main Page (Visitors)'
+                          : item.target === 'teams'
+                          ? '👥 Team Squads'
+                          : item.target === 'students'
+                          ? '🎓 All Students'
+                          : '📢 Everywhere'}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1 text-zinc-500">

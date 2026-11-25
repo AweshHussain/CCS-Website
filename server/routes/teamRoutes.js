@@ -1,17 +1,11 @@
 import express from 'express';
 import { verifyToken, requireRoles } from '../middleware/auth.js';
 import { db } from '../db.js';
+import { activeHeartbeats, isUserOnline, markUserActive, markUserOffline } from '../presence.js';
+
+export { activeHeartbeats, isUserOnline, markUserActive, markUserOffline };
 
 const router = express.Router();
-
-// Memory store for user presence / active heartbeat (user id -> timestamp)
-export const activeHeartbeats = new Map();
-
-export function isUserOnline(userId) {
-  const lastPing = activeHeartbeats.get(userId);
-  if (!lastPing) return false;
-  return Date.now() - lastPing < 30000; // active within last 30s
-}
 
 // All team routes require an authenticated user session
 router.use(verifyToken);

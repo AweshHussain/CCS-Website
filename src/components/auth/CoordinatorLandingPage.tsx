@@ -210,7 +210,17 @@ export const CoordinatorLandingPage: React.FC<CoordinatorLandingPageProps> = ({
                   className="p-3.5 rounded-lg bg-[#14151C]/80 border border-white/10 hover:border-white/20 transition-all flex flex-col gap-1.5 cursor-pointer"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-white">{item.studentName}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-white">{item.studentName}</span>
+                      <span
+                        className={`w-2 h-2 rounded-full inline-block ${
+                          item.isOnline
+                            ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)] animate-pulse'
+                            : 'bg-rose-500'
+                        }`}
+                        title={item.isOnline ? 'Online' : 'Offline'}
+                      />
+                    </div>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-zinc-400">
                       {item.domain}
                     </span>

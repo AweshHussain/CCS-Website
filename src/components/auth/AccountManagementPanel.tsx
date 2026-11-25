@@ -60,6 +60,7 @@ interface ManagedUser {
   avatarUrl: string;
   groupId?: string | null;
   groupName?: string | null;
+  isOnline?: boolean;
   permissions?: {
     canSendEmails?: boolean;
     canBroadcastAnnouncements?: boolean;
@@ -144,6 +145,22 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
   const [newDepartment, setNewDepartment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
+
+  // Fetch live presence roster
+  const fetchPresence = async () => {
+    try {
+      const res = await fetch('/api/coordinator/presence', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.onlineUserIds)) {
+        setOnlineUserIds(data.onlineUserIds);
+      }
+    } catch {
+      // quiet catch
+    }
+  };
 
   // Fetch all users
   const fetchUsers = async () => {
@@ -201,7 +218,7 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
     setIsRefreshing(true);
     const start = Date.now();
     try {
-      await Promise.all([fetchUsers(), fetchGroups()]);
+      await Promise.all([fetchUsers(), fetchGroups(), fetchPresence()]);
     } finally {
       const elapsed = Date.now() - start;
       const minDuration = 700; // minimum duration so the rotation motion is visibly clear
@@ -216,6 +233,9 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
   useEffect(() => {
     fetchUsers();
     fetchGroups();
+    fetchPresence();
+    const interval = setInterval(fetchPresence, 8000);
+    return () => clearInterval(interval);
   }, [token]);
 
   // Generate random strong password
@@ -678,11 +698,19 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
       {activeTab === 'roster' && (
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-white font-display flex items-center gap-2">
-              <Users className="w-4 h-4 text-[#E50920]" />
-              <span>Visible User Credentials & Roster</span>
-            </h3>
-            <span className="text-[11px] font-mono text-zinc-500">
+            <div className="flex items-center gap-3">
+              <h3 className="text-sm font-semibold text-white font-display flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#E50920]" />
+                <span>Visible User Credentials & Roster</span>
+              </h3>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-semibold">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>
+                  {usersList.filter((u) => onlineUserIds.includes(u.id) || u.isOnline).length} Online
+                </span>
+              </span>
+            </div>
+            <span className="text-[11px] font-mono text-zinc-500 hidden sm:inline">
               Click an account to share permissions • Edit name & photo anytime
             </span>
           </div>
@@ -692,6 +720,7 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
               const isRevealed = revealedPasswords[user.id] || false;
               const isMe = user.id === currentUser.id;
               const isExpanded = expandedUserId === user.id;
+              const isUserActive = onlineUserIds.includes(user.id) || !!user.isOnline;
 
               // Permissions count
               const perms = user.permissions || {};
@@ -712,20 +741,31 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     {/* Left: Avatar + Details */}
                     <div className="flex items-center gap-3.5">
-                      {/* Avatar with edit overlay */}
+                      {/* Avatar with edit overlay & presence indicator dot */}
                       <div
                         onClick={() => handleOpenEdit(user)}
-                        className="relative group w-12 h-12 rounded-xl overflow-hidden border border-white/15 shrink-0 flex items-center justify-center bg-black/60 cursor-pointer shadow-md"
+                        className="relative group w-12 h-12 rounded-xl border border-white/15 shrink-0 flex items-center justify-center bg-black/60 cursor-pointer shadow-md"
                         title="Click to edit photo & name"
                       >
-                        {user.avatarUrl ? (
-                          <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-950 flex items-center justify-center text-white font-bold text-sm">
-                            {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                        <div className="w-full h-full rounded-xl overflow-hidden flex items-center justify-center">
+                          {user.avatarUrl ? (
+                            <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-950 flex items-center justify-center text-white font-bold text-sm">
+                              {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
+                            </div>
+                          )}
+                        </div>
+                        {/* Status Dot on Avatar */}
+                        <div
+                          className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-[#0B0C10] z-10 ${
+                            isUserActive
+                              ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse'
+                              : 'bg-rose-500'
+                          }`}
+                          title={isUserActive ? 'Online' : 'Offline'}
+                        />
+                        <div className="absolute inset-0 rounded-xl bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                           <Camera className="w-4 h-4" />
                         </div>
                       </div>
@@ -746,6 +786,22 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
                             }`}
                           >
                             {user.role}
+                          </span>
+
+                          {/* Online / Offline status indicator badge */}
+                          <span
+                            className={`text-[9px] font-mono px-2 py-0.5 rounded-full font-semibold flex items-center gap-1.5 ${
+                              isUserActive
+                                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                                : 'bg-rose-500/10 text-rose-400 border border-rose-500/25'
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                isUserActive ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)] animate-pulse' : 'bg-rose-500'
+                              }`}
+                            />
+                            <span>{isUserActive ? 'Online' : 'Offline'}</span>
                           </span>
 
                           {/* Team Group Badge for Students */}
@@ -1499,17 +1555,29 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
                               className="p-3 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between gap-2"
                             >
                               <div className="flex items-center gap-2.5 overflow-hidden">
-                                <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-white/15 overflow-hidden flex items-center justify-center text-xs font-bold text-white shrink-0">
+                                <div className="relative w-8 h-8 rounded-lg bg-zinc-800 border border-white/15 overflow-hidden flex items-center justify-center text-xs font-bold text-white shrink-0">
                                   {member.avatarUrl ? (
                                     <img src={member.avatarUrl} alt={member.fullName} className="w-full h-full object-cover" />
                                   ) : (
                                     <span>{member.fullName ? member.fullName.charAt(0).toUpperCase() : 'S'}</span>
                                   )}
+                                  <div
+                                    className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-black ${
+                                      onlineUserIds.includes(member.id) ? 'bg-emerald-400' : 'bg-rose-500'
+                                    }`}
+                                  />
                                 </div>
                                 <div className="overflow-hidden">
-                                  <span className="text-xs font-bold text-white truncate block font-display">
-                                    {member.fullName}
-                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-xs font-bold text-white truncate font-display">
+                                      {member.fullName}
+                                    </span>
+                                    <span
+                                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                        onlineUserIds.includes(member.id) ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'
+                                      }`}
+                                    />
+                                  </div>
                                   <span className="text-[10px] font-mono text-zinc-400 truncate block">
                                     {member.email}
                                   </span>
@@ -1613,17 +1681,31 @@ export const AccountManagementPanel: React.FC<AccountManagementPanelProps> = ({
                       className="p-3.5 rounded-xl bg-black/60 border border-white/10 flex flex-col justify-between gap-3"
                     >
                       <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-zinc-800 border border-white/15 overflow-hidden flex items-center justify-center text-xs font-bold text-white shrink-0">
+                        <div className="relative w-9 h-9 rounded-lg bg-zinc-800 border border-white/15 overflow-hidden flex items-center justify-center text-xs font-bold text-white shrink-0">
                           {student.avatarUrl ? (
                             <img src={student.avatarUrl} alt={student.fullName} className="w-full h-full object-cover" />
                           ) : (
                             <span>{student.fullName ? student.fullName.charAt(0).toUpperCase() : 'S'}</span>
                           )}
+                          <div
+                            className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-black ${
+                              (onlineUserIds.includes(student.id) || student.isOnline) ? 'bg-emerald-400' : 'bg-rose-500'
+                            }`}
+                          />
                         </div>
                         <div className="overflow-hidden">
-                          <span className="text-xs font-bold text-white truncate block font-display">
-                            {student.fullName}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold text-white truncate font-display">
+                              {student.fullName}
+                            </span>
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                (onlineUserIds.includes(student.id) || student.isOnline)
+                                  ? 'bg-emerald-400 animate-pulse'
+                                  : 'bg-rose-500'
+                              }`}
+                            />
+                          </div>
                           <span className="text-[10px] font-mono text-zinc-400 truncate block">
                             {student.email}
                           </span>

@@ -16,6 +16,7 @@ import {
   Sparkles,
   BookOpen,
   Radio,
+  Globe,
   Edit3,
   X,
   ArrowRight,
@@ -110,6 +111,7 @@ interface AssignedTask {
 interface Announcement {
   id: string;
   message: string;
+  target?: 'all' | 'public' | 'students' | 'teams';
   authorName?: string;
   createdAt: string;
 }
@@ -215,6 +217,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
   // New Announcement Broadcast State
   const [newAnnouncementText, setNewAnnouncementText] = useState('');
+  const [announcementTarget, setAnnouncementTarget] = useState<'all' | 'public' | 'students' | 'teams'>('all');
   const [postingAnnouncement, setPostingAnnouncement] = useState(false);
 
   // Automatically reset to my_projects if on announcements tab but access is not granted
@@ -236,7 +239,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ message: newAnnouncementText.trim() }),
+        body: JSON.stringify({
+          message: newAnnouncementText.trim(),
+          target: announcementTarget,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -400,6 +406,32 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   useEffect(() => {
     fetchData();
   }, [token]);
+
+  // Active Presence Heartbeat: Keeps the student online in Coordinator views
+  useEffect(() => {
+    if (!token) return;
+    const pingHeartbeat = () => {
+      fetch('/api/auth/heartbeat', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    };
+
+    pingHeartbeat();
+    const interval = setInterval(pingHeartbeat, 15000); // Send heartbeat every 15 seconds
+
+    return () => clearInterval(interval);
+  }, [token]);
+
+  const handleLogout = () => {
+    if (token) {
+      fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    }
+    onLogout();
+  };
 
   // Filter for current student's projects (or show all with current student's prioritized)
   const myEmail = currentUser.email.toLowerCase();
@@ -678,7 +710,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                   <button
                     onClick={() => {
                       setProfileOpen(false);
-                      onLogout();
+                      handleLogout();
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono text-rose-400 hover:text-white hover:bg-rose-500/10 transition-colors cursor-pointer text-left"
                   >
@@ -1175,9 +1207,44 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             >
               <label className="text-xs font-mono text-zinc-300 font-bold uppercase flex items-center gap-2">
                 <Send className="w-3.5 h-3.5 text-[#E50920]" />
-                <span>Broadcast New Live Public Announcement</span>
+                <span>Broadcast New Live Announcement</span>
               </label>
-              <div className="flex flex-col sm:flex-row gap-3">
+
+              {/* Destination Target Selector */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-mono text-zinc-400">Choose Display Destination:</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: 'public', label: 'Main Page', sub: 'Public Visitors', icon: Globe, activeClass: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' },
+                    { id: 'teams', label: 'Team Squads', sub: 'Teams Hub', icon: Users, activeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50' },
+                    { id: 'students', label: 'All Students', sub: 'Student Portal', icon: GraduationCap, activeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/50' },
+                    { id: 'all', label: 'Everywhere', sub: 'Global Broadcast', icon: Radio, activeClass: 'bg-[#E50920]/20 text-[#E50920] border-[#E50920]/50' },
+                  ].map((dest) => {
+                    const Icon = dest.icon;
+                    const isSelected = announcementTarget === dest.id;
+                    return (
+                      <button
+                        key={dest.id}
+                        type="button"
+                        onClick={() => setAnnouncementTarget(dest.id as any)}
+                        className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-0.5 ${
+                          isSelected
+                            ? dest.activeClass
+                            : 'bg-black/40 border-white/10 text-zinc-400 hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 font-semibold text-xs font-mono">
+                          <Icon className="w-3.5 h-3.5 shrink-0" />
+                          <span>{dest.label}</span>
+                        </div>
+                        <span className="text-[10px] font-mono text-zinc-500 block truncate">{dest.sub}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-1">
                 <input
                   type="text"
                   value={newAnnouncementText}
@@ -1196,7 +1263,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 </button>
               </div>
               <span className="text-[10px] font-mono text-zinc-500">
-                Max 180 characters. Visible to all platform visitors and society members on the ticker.
+                Max 180 characters. Visible to targeted audience on the platform.
               </span>
             </form>
 
@@ -1214,7 +1281,28 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                   className="p-4 rounded-xl border border-white/10 bg-[#0B0C10]/92 backdrop-blur-xl shadow-xl shadow-black/40 flex flex-col gap-2"
                 >
                   <div className="flex items-center justify-between text-[11px] font-mono">
-                    <span className="text-[#E50920] font-semibold">Broadcast #{announcements.length - idx}</span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[#E50920] font-semibold">Broadcast #{announcements.length - idx}</span>
+                      <span
+                        className={`px-2 py-0.2 rounded-full text-[9px] font-mono font-semibold uppercase tracking-wider border ${
+                          ann.target === 'public'
+                            ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30'
+                            : ann.target === 'teams'
+                            ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                            : ann.target === 'students'
+                            ? 'bg-purple-500/15 text-purple-400 border-purple-500/30'
+                            : 'bg-[#E50920]/15 text-[#E50920] border-[#E50920]/30'
+                        }`}
+                      >
+                        {ann.target === 'public'
+                          ? '🌐 Main Page'
+                          : ann.target === 'teams'
+                          ? '👥 Team Squads'
+                          : ann.target === 'students'
+                          ? '🎓 All Students'
+                          : '📢 Everywhere'}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-3">
                       <span className="text-zinc-500">{new Date(ann.createdAt).toLocaleDateString()}</span>
                       <button
@@ -1245,7 +1333,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           <UserProfilePage
             currentUser={currentUser}
             token={token}
-            onLogout={onLogout}
+            onLogout={handleLogout}
           />
         )}
       </main>

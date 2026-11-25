@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { db } from '../db.js';
 import { verifyToken, requireRoles } from '../middleware/auth.js';
 import { encryptPassword, decryptPassword } from '../utils/crypto.js';
+import { isUserOnline } from '../presence.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -82,6 +83,7 @@ router.get('/users', async (req, res) => {
             canAssignWork: u.role === 'coordinator',
             canManageAccounts: u.role === 'coordinator',
           },
+          isOnline: isUserOnline(u.id),
           createdAt: u.createdAt,
         };
       }),

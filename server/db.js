@@ -134,6 +134,7 @@ const announcementSchema = new mongoose.Schema(
   {
     id: { type: String, required: true, unique: true, index: true },
     message: { type: String, required: true },
+    target: { type: String, enum: ['all', 'public', 'students', 'teams'], default: 'all' },
     authorName: { type: String, default: 'Student Coordinator' },
     createdAt: { type: String, default: () => new Date().toISOString() },
   },
@@ -963,10 +964,11 @@ export const db = {
     return readJson(DB_ANNOUNCEMENTS_FILE, SEED_ANNOUNCEMENTS);
   },
 
-  createAnnouncement: async ({ message, authorName }) => {
+  createAnnouncement: async ({ message, authorName, target = 'all' }) => {
     const newAnn = {
       id: `ann-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
       message,
+      target: target || 'all',
       authorName: authorName || 'Student Coordinator',
       createdAt: new Date().toISOString(),
     };

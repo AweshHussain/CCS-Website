@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { db } from '../db.js';
 import { generateToken, verifyToken } from '../middleware/auth.js';
 import { encryptPassword } from '../utils/crypto.js';
+import { markUserActive, markUserOffline } from '../presence.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -137,6 +138,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = generateToken(user);
+    markUserActive(user.id);
 
     return res.status(200).json({
       success: true,
@@ -159,6 +161,26 @@ router.post('/login', async (req, res) => {
         },
       },
     });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/auth/heartbeat - Realtime Online Presence Heartbeat
+router.post('/heartbeat', verifyToken, async (req, res) => {
+  try {
+    markUserActive(req.user.id);
+    return res.status(200).json({ success: true, isOnline: true });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/auth/logout - Realtime User Offline Transition
+router.post('/logout', verifyToken, async (req, res) => {
+  try {
+    markUserOffline(req.user.id);
+    return res.status(200).json({ success: true, isOnline: false });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -369,6 +391,7 @@ router.post('/refresh-session', verifyToken, async (req, res) => {
     }
 
     const token = generateToken(user);
+    markUserActive(user.id);
 
     return res.status(200).json({
       success: true,

@@ -91,6 +91,7 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
   const [group, setGroup] = useState<any>(null);
   const [teammates, setTeammates] = useState<Teammate[]>([]);
   const [activities, setActivities] = useState<TeamActivity[]>([]);
+  const [teamAnnouncements, setTeamAnnouncements] = useState<any[]>([]);
   const [activityFilter, setActivityFilter] = useState<string>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -155,6 +156,15 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
           if (other) setActiveTeammate(other);
         }
       }
+
+      // Fetch team-specific announcements
+      try {
+        const resAnn = await fetch('/api/announcements?target=teams');
+        const dataAnn = await resAnn.json();
+        if (dataAnn.success && Array.isArray(dataAnn.announcements)) {
+          setTeamAnnouncements(dataAnn.announcements);
+        }
+      } catch {}
     } catch (err) {
       console.warn('Failed to fetch team data:', err);
     } finally {
@@ -449,6 +459,21 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
 
   return (
     <div className="w-full flex flex-col gap-6 animate-fadeIn">
+      {/* Pinned Team Directives / Broadcasts */}
+      {teamAnnouncements.length > 0 && (
+        <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono text-emerald-300">
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold uppercase tracking-wider shrink-0">
+              Team Broadcast
+            </span>
+            <span className="text-white font-medium truncate">{teamAnnouncements[0].message}</span>
+          </div>
+          <span className="text-[10px] text-emerald-400/80 shrink-0">
+            {new Date(teamAnnouncements[0].createdAt).toLocaleDateString()}
+          </span>
+        </div>
+      )}
+
       {/* ================= TEAM HEADER ================= */}
       <div className="p-6 rounded-2xl border border-white/10 bg-[#0B0C10]/95 backdrop-blur-xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

@@ -46,6 +46,7 @@ export interface AssignedTaskDirective {
     submissionId?: string;
     status: string;
     notes?: string;
+    isOnline?: boolean;
   }[];
   dueDate: string;
   priority: 'normal' | 'high' | 'urgent';
@@ -89,6 +90,7 @@ export const CoordinatorTaskDirectivesPanel: React.FC<CoordinatorTaskDirectivesP
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'closed'>('all');
   const [expandedQueues, setExpandedQueues] = useState<Record<string, boolean>>({});
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
@@ -137,8 +139,23 @@ export const CoordinatorTaskDirectivesPanel: React.FC<CoordinatorTaskDirectivesP
     }
   };
 
+  const fetchPresence = async () => {
+    try {
+      const res = await fetch('/api/coordinator/presence', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.onlineUserIds)) {
+        setOnlineUserIds(data.onlineUserIds);
+      }
+    } catch {}
+  };
+
   useEffect(() => {
     fetchTasks();
+    fetchPresence();
+    const interval = setInterval(fetchPresence, 8000);
+    return () => clearInterval(interval);
   }, [token]);
 
   const handleManualRefresh = async () => {
@@ -146,7 +163,7 @@ export const CoordinatorTaskDirectivesPanel: React.FC<CoordinatorTaskDirectivesP
     setIsRefreshing(true);
     const minSpinPromise = new Promise((resolve) => setTimeout(resolve, 1000));
     try {
-      await Promise.all([fetchTasks(), minSpinPromise]);
+      await Promise.all([fetchTasks(), fetchPresence(), minSpinPromise]);
     } finally {
       setIsRefreshing(false);
     }
@@ -662,7 +679,7 @@ export const CoordinatorTaskDirectivesPanel: React.FC<CoordinatorTaskDirectivesP
                   <div className="mt-3 p-3.5 rounded-xl bg-black/40 border border-white/10 flex flex-col gap-2.5 animate-in fade-in duration-150">
                     {claims.length === 0 ? (
                       <p className="text-xs font-mono text-zinc-500 text-center py-3">
-                        Queue is currently empty. Directives are open to all students on a First-Come, First-Served basis.
+                        Queue is currently empty. Directives are open to all students on an open queue claim basis.
                       </p>
                     ) : (
                       <div className="divide-y divide-white/5">
@@ -681,6 +698,27 @@ export const CoordinatorTaskDirectivesPanel: React.FC<CoordinatorTaskDirectivesP
                                 <div className="flex items-center gap-2">
                                   <span className="font-bold text-white font-display">
                                     {claim.studentName}
+                                  </span>
+                                  {/* Online / Offline status dot badge */}
+                                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono">
+                                    <span
+                                      className={`w-2 h-2 rounded-full ${
+                                        ((claim.studentId && onlineUserIds.includes(claim.studentId)) || claim.isOnline)
+                                          ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse'
+                                          : 'bg-rose-500'
+                                      }`}
+                                    />
+                                    <span
+                                      className={
+                                        ((claim.studentId && onlineUserIds.includes(claim.studentId)) || claim.isOnline)
+                                          ? 'text-emerald-400 font-semibold'
+                                          : 'text-zinc-500'
+                                      }
+                                    >
+                                      {((claim.studentId && onlineUserIds.includes(claim.studentId)) || claim.isOnline)
+                                        ? 'Online'
+                                        : 'Offline'}
+                                    </span>
                                   </span>
                                   <span className="text-[10px] text-zinc-500">
                                     ({claim.studentEmail})

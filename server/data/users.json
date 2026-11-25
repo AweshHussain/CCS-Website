@@ -67,5 +67,19 @@
     "department": "CSE",
     "groupId": "group-1795577119746-vnnt",
     "groupName": "Cybernetic Crusaders"
+  },
+  {
+    "id": "user-1795585672561-p0br82",
+    "createdAt": "2026-11-25T05:47:52.561Z",
+    "updatedAt": "2026-11-25T05:47:52.574Z",
+    "avatarUrl": "",
+    "email": "sohaib1@gmail.com",
+    "passwordHash": "$2b$10$jzhHrAyRfJS92vM4eBJjROEvjtMJRuIeNKXi5hfGj9Ge9iS47tDe6",
+    "vaultCipher": "38e15f8d9e57265003cf298ceef8affb:b188aee6daacb949ba43522e98edb889",
+    "fullName": "Syed Mohammad Sohaib Hussain",
+    "role": "student",
+    "department": "CSE",
+    "groupId": "group-1795577119746-vnnt",
+    "groupName": "Cybernetic Crusaders"
   }
 ]

@@ -17,6 +17,7 @@ import {
 
 interface StudentSubmission {
   id: string;
+  studentId?: string;
   studentName: string;
   studentEmail: string;
   department: string;
@@ -29,6 +30,7 @@ interface StudentSubmission {
   status: 'pending' | 'approved' | 'changes_requested';
   coordinatorFeedback?: string;
   coordinatorName?: string;
+  isOnline?: boolean;
   submittedAt: string;
   updatedAt?: string;
 }
@@ -48,6 +50,7 @@ export const StudentWorkPanel: React.FC<StudentWorkPanelProps> = ({ token, curre
   const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
   const [loading, setLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -90,8 +93,23 @@ export const StudentWorkPanel: React.FC<StudentWorkPanelProps> = ({ token, curre
     }
   };
 
+  const fetchPresence = async () => {
+    try {
+      const res = await fetch('/api/coordinator/presence', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.onlineUserIds)) {
+        setOnlineUserIds(data.onlineUserIds);
+      }
+    } catch {}
+  };
+
   useEffect(() => {
     fetchSubmissions();
+    fetchPresence();
+    const interval = setInterval(fetchPresence, 8000);
+    return () => clearInterval(interval);
   }, [token]);
 
   const handleManualRefresh = async () => {
@@ -99,7 +117,7 @@ export const StudentWorkPanel: React.FC<StudentWorkPanelProps> = ({ token, curre
     setIsRefreshing(true);
     const minSpinPromise = new Promise((resolve) => setTimeout(resolve, 1000));
     try {
-      await Promise.all([fetchSubmissions(), minSpinPromise]);
+      await Promise.all([fetchSubmissions(), fetchPresence(), minSpinPromise]);
     } finally {
       setIsRefreshing(false);
     }
@@ -332,6 +350,26 @@ export const StudentWorkPanel: React.FC<StudentWorkPanelProps> = ({ token, curre
 
                     <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 mt-0.5">
                       <span className="text-zinc-200 font-medium">{sub.studentName}</span>
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono">
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            ((sub.studentId && onlineUserIds.includes(sub.studentId)) || sub.isOnline)
+                              ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse'
+                              : 'bg-rose-500'
+                          }`}
+                        />
+                        <span
+                          className={
+                            ((sub.studentId && onlineUserIds.includes(sub.studentId)) || sub.isOnline)
+                              ? 'text-emerald-400 font-semibold'
+                              : 'text-zinc-500'
+                          }
+                        >
+                          {((sub.studentId && onlineUserIds.includes(sub.studentId)) || sub.isOnline)
+                            ? 'Online'
+                            : 'Offline'}
+                        </span>
+                      </span>
                       <span>•</span>
                       <span className="text-zinc-400">{sub.department}</span>
                     </div>
@@ -445,6 +483,31 @@ export const StudentWorkPanel: React.FC<StudentWorkPanelProps> = ({ token, curre
                 <p className="text-xs font-mono text-zinc-400 truncate max-w-xs">
                   {reviewingSubmission.projectTitle}
                 </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs font-mono text-zinc-300 font-medium">
+                    {reviewingSubmission.studentName}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono">
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        ((reviewingSubmission.studentId && onlineUserIds.includes(reviewingSubmission.studentId)) || reviewingSubmission.isOnline)
+                          ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse'
+                          : 'bg-rose-500'
+                      }`}
+                    />
+                    <span
+                      className={
+                        ((reviewingSubmission.studentId && onlineUserIds.includes(reviewingSubmission.studentId)) || reviewingSubmission.isOnline)
+                          ? 'text-emerald-400 font-semibold'
+                          : 'text-zinc-500'
+                      }
+                    >
+                      {((reviewingSubmission.studentId && onlineUserIds.includes(reviewingSubmission.studentId)) || reviewingSubmission.isOnline)
+                        ? 'Online'
+                        : 'Offline'}
+                    </span>
+                  </span>
+                </div>
               </div>
               <button
                 type="button"
