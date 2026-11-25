@@ -2,30 +2,6 @@ import { TeamMember } from '../types';
 
 export const teamData: TeamMember[] = [
   {
-    id: 'faculty-coordinator',
-    name: 'Dr. Rajesh Sharma',
-    role: 'Faculty Coordinator & Chief Advisor',
-    category: 'Faculty',
-    bio: 'Guiding CCS with strategic foresight, research mentorship, and industry-academia synergy for high-impact innovation.',
-    avatarFallback: 'RS',
-    skills: ['Distributed Systems', 'Research Mentorship', 'Algorithmic Optimization'],
-    linkedin: 'https://linkedin.com',
-    email: 'rajesh.sharma@ccs-society.org',
-    badge: 'Faculty Patron'
-  },
-  {
-    id: 'faculty-co-advisor',
-    name: 'Prof. Ananya Sen',
-    role: 'Faculty Co-Coordinator',
-    category: 'Faculty',
-    bio: 'Specializing in machine learning paradigms and student hackathon mentorship, spearheading competitive excellence.',
-    avatarFallback: 'AS',
-    skills: ['Machine Learning', 'Curriculum Design', 'Student Mentorship'],
-    linkedin: 'https://linkedin.com',
-    email: 'ananya.sen@ccs-society.org',
-    badge: 'Academic Mentor'
-  },
-  {
     id: 'awesh-hussain',
     name: 'Awesh Hussain',
     role: 'President & Full-Stack Architect',

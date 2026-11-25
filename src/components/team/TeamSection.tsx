@@ -4,14 +4,13 @@ import { teamData } from '../../data/teamData';
 import { TeamCard } from './TeamCard';
 import { TeamMember } from '../../types';
 
-const CATEGORIES = ['All', 'Leadership', 'Faculty', 'Technical', 'Development', 'Design', 'Operations'] as const;
+const CATEGORIES = ['All', 'Leadership', 'Technical', 'Development', 'Design', 'Operations'] as const;
 
 export const TeamSection: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Group members for the Tree Hierarchy View
-  const facultyMembers = useMemo(() => teamData.filter((m) => m.category === 'Faculty'), []);
   const executiveMembers = useMemo(
     () => teamData.filter((m) => m.id === 'awesh-hussain' || m.id === 'vice-president'),
     []
@@ -126,20 +125,11 @@ export const TeamSection: React.FC = () => {
         )}
 
         {/* ============================================================== */}
-        {/* HIERARCHY VIEW (Faculties -> President/VP -> Domain Leads)     */}
+        {/* HIERARCHY VIEW (Executive Leadership -> Domain Leads)          */}
         {/* ============================================================== */}
         {isTreeActive ? (
           <div className="relative flex flex-col items-center w-full gap-12 sm:gap-16">
-            {/* ---------------- LEVEL 1: FACULTY ADVISORS ---------------- */}
-            <div className="w-full flex flex-col items-center">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl w-full">
-                {facultyMembers.map((member) => (
-                  <TeamCard key={member.id} member={member} />
-                ))}
-              </div>
-            </div>
-
-            {/* ---------------- LEVEL 2: EXECUTIVE LEADERSHIP ---------------- */}
+            {/* ---------------- LEVEL 1: EXECUTIVE LEADERSHIP ---------------- */}
             <div className="w-full flex flex-col items-center">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl w-full">
                 {executiveMembers.map((member) => (

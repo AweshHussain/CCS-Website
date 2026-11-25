@@ -57,33 +57,18 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
 
   const getRoleDesignation = (role: string) => {
     switch (role) {
-      case 'faculty':
-        return {
-          title: 'Faculty Technical Advisor',
-          subtitle: 'Institutional Mentor & Research Evaluator',
-          badge: 'FACULTY ADVISOR',
-          color: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
-          icon: <GraduationCap className="w-5 h-5 text-amber-400" />,
-          level: 'Level 2 - Academic Advisory Authority',
-          privileges: [
-            'Direct inspection of student project updates & code repositories',
-            'Milestone evaluation, approvals, and revision requests',
-            'Issue technical tasks and directives to resident developers',
-            'Submit direct inquiries to the Student Coordinator Desk',
-          ],
-        };
       case 'student':
         return {
-          title: 'Resident Developer & Student Builder',
-          subtitle: 'Technical Contributor & Engineering Fellow',
+          title: 'Code & Compute Society',
+          subtitle: 'student portal',
           badge: 'STUDENT BUILDER',
           color: 'text-blue-400 bg-blue-500/10 border-blue-500/30',
           icon: <Terminal className="w-5 h-5 text-blue-400" />,
           level: 'Level 1 - Engineering Resident',
           privileges: [
             'Submit and publish ongoing technical project repositories',
-            'Receive structured advisory feedback from faculty',
-            'Access faculty-assigned assignments and society directives',
+            'Receive structured advisory feedback from technical leads',
+            'Access assigned assignments and society directives',
             'Real-time access to society broadcasts and announcements',
           ],
         };
@@ -99,7 +84,7 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
           privileges: [
             'Full administrative oversight of all society modules',
             'Broadcast live announcements to the public platform',
-            'Manage and issue credentials to faculty & student rosters',
+            'Manage and issue credentials to student rosters',
             'Decrypted access to credential security vault',
           ],
         };

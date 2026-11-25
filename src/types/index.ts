@@ -2,7 +2,7 @@ export interface TeamMember {
   id: string;
   name: string;
   role: string;
-  category: 'Faculty' | 'Leadership' | 'Technical' | 'Development' | 'Design' | 'Operations';
+  category: 'Leadership' | 'Technical' | 'Development' | 'Design' | 'Operations';
   bio: string;
   image?: string;
   avatarFallback: string;

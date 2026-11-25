@@ -13,7 +13,6 @@ const __dirname = path.dirname(__filename);
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_USERS_FILE = path.join(DATA_DIR, 'users.json');
 const DB_UPDATES_FILE = path.join(DATA_DIR, 'student_updates.json');
-const DB_QUERIES_FILE = path.join(DATA_DIR, 'faculty_queries.json');
 const DB_SETTINGS_FILE = path.join(DATA_DIR, 'portal_settings.json');
 const DB_ANNOUNCEMENTS_FILE = path.join(DATA_DIR, 'announcements.json');
 const DB_ASSIGNED_WORK_FILE = path.join(DATA_DIR, 'assigned_work.json');
@@ -85,30 +84,7 @@ const studentUpdateSchema = new mongoose.Schema(
 export const StudentUpdateModel = mongoose.models.StudentUpdate || mongoose.model('StudentUpdate', studentUpdateSchema);
 
 // -------------------------------------------------------------
-// 3. Faculty Queries & Advisory Directives Schema
-// -------------------------------------------------------------
-const facultyQuerySchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true, unique: true, index: true },
-    facultyName: { type: String, required: true },
-    facultyEmail: { type: String, required: true },
-    department: { type: String, default: 'Department of Computer Science & Engineering' },
-    subject: { type: String, required: true },
-    message: { type: String, required: true },
-    priority: { type: String, enum: ['urgent', 'advisory', 'normal'], default: 'normal' },
-    category: { type: String, default: 'Event Permission' },
-    status: { type: String, enum: ['open', 'in_review', 'resolved'], default: 'open' },
-    coordinatorResponse: { type: String, default: '' },
-    createdAt: { type: String, default: () => new Date().toISOString() },
-    resolvedAt: { type: String },
-  },
-  { collection: 'ccs_faculty_queries' }
-);
-
-export const FacultyQueryModel = mongoose.models.FacultyQuery || mongoose.model('FacultyQuery', facultyQuerySchema);
-
-// -------------------------------------------------------------
-// 4. Portal Settings & Preferences Schema
+// 3. Portal Settings & Preferences Schema
 // -------------------------------------------------------------
 const portalSettingsSchema = new mongoose.Schema(
   {
@@ -119,7 +95,6 @@ const portalSettingsSchema = new mongoose.Schema(
     submissionSeasonOpen: { type: Boolean, default: true },
     allowedRegistrationDomain: { type: String, default: 'All Domains' },
     notifyOnStudentSubmission: { type: Boolean, default: true },
-    notifyOnFacultyQuery: { type: Boolean, default: true },
     updatedAt: { type: String, default: () => new Date().toISOString() },
   },
   { collection: 'ccs_portal_settings' }
@@ -340,49 +315,6 @@ export const SEED_STUDENT_UPDATES = [
   },
 ];
 
-export const SEED_FACULTY_QUERIES = [
-  {
-    id: 'query-1',
-    facultyName: 'Dr. Rajesh Sharma',
-    facultyEmail: 'rajesh.sharma@institution.edu',
-    department: 'Department of Computer Science & Engineering',
-    subject: 'Approval of Hardware Lab Access for Hackathon 2026',
-    message: 'The departmental council has reviewed the student coordinator proposal for 48-hour continuous lab access for the upcoming hackathon. Please submit the safety warden list and power distribution map by Wednesday so we can authorize laboratory access keys.',
-    priority: 'urgent',
-    category: 'Event Permission',
-    status: 'open',
-    coordinatorResponse: '',
-    createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
-  },
-  {
-    id: 'query-2',
-    facultyName: 'Dr. Anita Deshmukh',
-    facultyEmail: 'anita.deshmukh@institution.edu',
-    department: 'Department of AI & Data Science',
-    subject: 'National Research Symposium Paper Nominations',
-    message: 'We have received 4 grant invitations for student-led computing papers. Please compile the abstracts from the AI wing and submit the author list by Friday afternoon for advisory council endorsement.',
-    priority: 'advisory',
-    category: 'Funding & Grants',
-    status: 'in_review',
-    coordinatorResponse: 'AI wing leads have gathered 3 paper drafts. Compiling final PDF for council submission.',
-    createdAt: new Date(Date.now() - 3600000 * 20).toISOString(),
-  },
-  {
-    id: 'query-3',
-    facultyName: 'Dr. Vikram Patel',
-    facultyEmail: 'vikram.patel@institution.edu',
-    department: 'Office of Student Dean',
-    subject: 'Guest Speaker Confirmation: Distributed Backends Masterclass',
-    message: 'Dr. Sandeep from Google Cloud has confirmed his masterclass on distributed computing for Saturday 11:00 AM. Please coordinate the auditorium audiovisual setup and send meeting links.',
-    priority: 'normal',
-    category: 'Curriculum Advisory',
-    status: 'resolved',
-    coordinatorResponse: 'Auditorium AV confirmed with campus media cell. Student registration broadcast live.',
-    createdAt: new Date(Date.now() - 3600000 * 72).toISOString(),
-    resolvedAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-  },
-];
-
 export const DEFAULT_SETTINGS = {
   id: 'main_settings',
   societyName: 'Code & Compute Society (CCS)',
@@ -391,7 +323,6 @@ export const DEFAULT_SETTINGS = {
   submissionSeasonOpen: true,
   allowedRegistrationDomain: 'All Domains',
   notifyOnStudentSubmission: true,
-  notifyOnFacultyQuery: true,
   updatedAt: new Date().toISOString(),
 };
 
@@ -590,13 +521,6 @@ export async function connectDB() {
       await StudentUpdateModel.insertMany(SEED_STUDENT_UPDATES);
     }
 
-    // 3. Seed Faculty Queries
-    const queryCount = await FacultyQueryModel.countDocuments();
-    if (queryCount === 0) {
-      console.log('📦 [Database] Seeding faculty queries into MongoDB Atlas...');
-      await FacultyQueryModel.insertMany(SEED_FACULTY_QUERIES);
-    }
-
     // 4. Seed Portal Settings
     const settingsDoc = await PortalSettingsModel.findOne({ id: 'main_settings' });
     if (!settingsDoc) {
@@ -787,6 +711,19 @@ export const db = {
     return readJson(DB_UPDATES_FILE, SEED_STUDENT_UPDATES);
   },
 
+  getStudentUpdateById: async (id) => {
+    if (!id) return null;
+    if (isMongoConnected) {
+      try {
+        return await StudentUpdateModel.findOne({ id }).lean();
+      } catch (err) {
+        console.error('Mongo getStudentUpdateById error:', err.message);
+      }
+    }
+    const local = readJson(DB_UPDATES_FILE, SEED_STUDENT_UPDATES);
+    return local.find((s) => s.id === id) || null;
+  },
+
   updateStudentSubmissionStatus: async (id, status, coordinatorFeedback = '', coordinatorName = '') => {
     if (isMongoConnected) {
       try {
@@ -859,64 +796,6 @@ export const db = {
     local.unshift(newUpdate);
     writeJson(DB_UPDATES_FILE, local);
     return newUpdate;
-  },
-
-  // --- Faculty Queries & Directives ---
-  getFacultyQueries: async () => {
-    if (isMongoConnected) {
-      try {
-        return await FacultyQueryModel.find({}).sort({ createdAt: -1 }).lean();
-      } catch (err) {
-        console.error('Mongo getFacultyQueries error:', err.message);
-      }
-    }
-    return readJson(DB_QUERIES_FILE, SEED_FACULTY_QUERIES);
-  },
-
-  updateFacultyQuery: async (id, updates) => {
-    if (isMongoConnected) {
-      try {
-        const updated = await FacultyQueryModel.findOneAndUpdate(
-          { id },
-          { ...updates },
-          { new: true }
-        ).lean();
-        if (updated) return updated;
-      } catch (err) {
-        console.error('Mongo updateFacultyQuery error:', err.message);
-      }
-    }
-
-    const local = readJson(DB_QUERIES_FILE, SEED_FACULTY_QUERIES);
-    const idx = local.findIndex((q) => q.id === id);
-    if (idx === -1) return null;
-    local[idx] = { ...local[idx], ...updates };
-    writeJson(DB_QUERIES_FILE, local);
-    return local[idx];
-  },
-
-  createFacultyQuery: async (data) => {
-    const newQuery = {
-      id: `query-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-      createdAt: new Date().toISOString(),
-      status: 'open',
-      coordinatorResponse: '',
-      ...data,
-    };
-
-    if (isMongoConnected) {
-      try {
-        const created = await FacultyQueryModel.create(newQuery);
-        return created.toObject();
-      } catch (err) {
-        console.error('Mongo createFacultyQuery error:', err.message);
-      }
-    }
-
-    const local = readJson(DB_QUERIES_FILE, SEED_FACULTY_QUERIES);
-    local.unshift(newQuery);
-    writeJson(DB_QUERIES_FILE, local);
-    return newQuery;
   },
 
   // --- Portal Settings ---

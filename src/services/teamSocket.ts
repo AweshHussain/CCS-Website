@@ -12,7 +12,7 @@ export const getTeamSocket = (): Socket | null => {
         ? 'http://localhost:5000'
         : window.location.origin;
 
-    const token = localStorage.getItem('ccs_auth_token');
+    const token = localStorage.getItem('ccs_jwt_token') || localStorage.getItem('ccs_auth_token');
 
     socketInstance = io(socketUrl, {
       auth: { token },
@@ -40,7 +40,7 @@ export const getTeamSocket = (): Socket | null => {
 };
 
 export const registerSocketUser = (userId: string, groupId: string | null, fullName: string) => {
-  const token = localStorage.getItem('ccs_auth_token');
+  const token = localStorage.getItem('ccs_jwt_token') || localStorage.getItem('ccs_auth_token');
   const socket = getTeamSocket();
   if (socket) {
     if (token) {

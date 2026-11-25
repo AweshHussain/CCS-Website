@@ -23,7 +23,6 @@ interface PortalSettings {
   submissionSeasonOpen: boolean;
   allowedRegistrationDomain: string;
   notifyOnStudentSubmission: boolean;
-  notifyOnFacultyQuery: boolean;
   updatedAt?: string;
 }
 
@@ -61,7 +60,6 @@ export const PortalSettingsPanel: React.FC<PortalSettingsPanelProps> = ({
     submissionSeasonOpen: true,
     allowedRegistrationDomain: 'All Domains',
     notifyOnStudentSubmission: true,
-    notifyOnFacultyQuery: true,
   });
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -100,7 +98,6 @@ export const PortalSettingsPanel: React.FC<PortalSettingsPanelProps> = ({
           submissionSeasonOpen: data.settings.submissionSeasonOpen ?? true,
           allowedRegistrationDomain: data.settings.allowedRegistrationDomain || 'All Domains',
           notifyOnStudentSubmission: data.settings.notifyOnStudentSubmission ?? true,
-          notifyOnFacultyQuery: data.settings.notifyOnFacultyQuery ?? true,
           updatedAt: data.settings.updatedAt,
         });
       }
@@ -597,18 +594,6 @@ export const PortalSettingsPanel: React.FC<PortalSettingsPanelProps> = ({
                   type="checkbox"
                   checked={settings.notifyOnStudentSubmission}
                   onChange={(e) => setSettings({ ...settings, notifyOnStudentSubmission: e.target.checked })}
-                  className="w-3.5 h-3.5 accent-[#E50920] rounded cursor-pointer"
-                />
-              </label>
-
-              <label className="flex-1 flex items-center justify-between p-3 rounded-lg bg-black/30 border border-white/10 cursor-pointer">
-                <span className="text-xs font-mono text-zinc-300">
-                  Alert on faculty inquiries
-                </span>
-                <input
-                  type="checkbox"
-                  checked={settings.notifyOnFacultyQuery}
-                  onChange={(e) => setSettings({ ...settings, notifyOnFacultyQuery: e.target.checked })}
                   className="w-3.5 h-3.5 accent-[#E50920] rounded cursor-pointer"
                 />
               </label>

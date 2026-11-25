@@ -242,7 +242,7 @@ router.put('/users/:id', async (req, res) => {
   }
 });
 
-// PATCH /api/admin/users/:id/permissions - Coordinator updates granular permissions for a faculty or coordinator
+// PATCH /api/admin/users/:id/permissions - Coordinator updates granular permissions for a user
 router.patch('/users/:id/permissions', async (req, res) => {
   try {
     const { id } = req.params;

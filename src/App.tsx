@@ -11,6 +11,7 @@ import { ParticleBackground } from './components/ui/ParticleBackground';
 import { Floating3DLogo } from './components/3d/Floating3DLogo';
 import { LoginPage } from './components/auth/LoginPage';
 import { FloatingAnnouncement } from './components/ui/FloatingAnnouncement';
+import { disconnectTeamSocket } from './services/teamSocket';
 
 export function App() {
   // Always start with intro on every page load/refresh
@@ -174,10 +175,21 @@ export function App() {
   }, []);
 
   const handleLogout = () => {
+    const token = localStorage.getItem('ccs_jwt_token');
+    if (token) {
+      fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    }
     localStorage.removeItem('ccs_jwt_token');
     localStorage.removeItem('ccs_current_user');
-    window.dispatchEvent(new Event('ccs_auth_change'));
+    localStorage.removeItem('ccs_session_issued_at');
+    localStorage.removeItem('ccs_auth_token');
+    disconnectTeamSocket();
     setCurrentUser(null);
+    window.dispatchEvent(new Event('ccs_auth_change'));
+    window.dispatchEvent(new Event('storage'));
   };
 
   const handleOpenLogin = () => {
