@@ -85,12 +85,14 @@ interface TeamCollaborationHubProps {
   };
   token: string;
   onRefreshUser?: () => void;
+  theme?: 'dark' | 'light';
 }
 
 export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
   currentUser,
   token,
   onRefreshUser,
+  theme = 'dark',
 }) => {
   const [loading, setLoading] = useState(true);
   const [hasGroup, setHasGroup] = useState<boolean>(false);
@@ -664,24 +666,30 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
       )}
 
       {/* ================= TEAM HEADER ================= */}
-      <div className="p-6 rounded-2xl border border-white/10 bg-[#0B0C10]/95 backdrop-blur-xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className={`p-6 rounded-2xl border backdrop-blur-xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+        theme === 'light'
+          ? 'bg-white/95 border-black/10 shadow-black/5 text-zinc-900'
+          : 'bg-[#0B0C10]/95 border-white/10 shadow-black/50 text-white'
+      }`}>
         <div>
           <div className="flex items-center gap-2.5 mb-1.5">
             <span className="px-2.5 py-0.5 rounded-full bg-[#E50920]/20 text-[#E50920] border border-[#E50920]/40 text-[10px] font-mono font-bold uppercase tracking-wider">
               {group?.code || 'TEAM'}
             </span>
-            <span className="text-xs font-mono text-zinc-400">
-              Capacity: <strong className="text-white">{teammates.length} / 4 Members</strong>
+            <span className={`text-xs font-mono ${theme === 'light' ? 'text-zinc-600' : 'text-zinc-400'}`}>
+              Capacity: <strong className={theme === 'light' ? 'text-zinc-900' : 'text-white'}>{teammates.length} / 4 Members</strong>
             </span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] font-mono text-emerald-400">Live Sync</span>
+            <span className="text-[10px] font-mono text-emerald-500 font-semibold">Live Sync</span>
           </div>
 
-          <h1 className="text-xl sm:text-2xl font-bold font-display text-white">
+          <h1 className={`text-xl sm:text-2xl font-bold font-display ${theme === 'light' ? 'text-zinc-900' : 'text-white'}`}>
             {group?.name || 'Assigned Project Squad'}
           </h1>
           {group?.description && (
-            <p className="text-xs font-mono text-zinc-400 mt-1 max-w-2xl">{group.description}</p>
+            <p className={`text-xs font-mono mt-1 max-w-2xl ${theme === 'light' ? 'text-zinc-600' : 'text-zinc-400'}`}>
+              {group.description}
+            </p>
           )}
         </div>
 
@@ -697,7 +705,11 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
           <button
             onClick={() => fetchTeamData(true)}
             disabled={isRefreshing}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white transition-all cursor-pointer"
+            className={`p-2 rounded-xl border transition-all cursor-pointer ${
+              theme === 'light'
+                ? 'bg-black/5 hover:bg-black/10 border-black/15 text-zinc-700 hover:text-black'
+                : 'bg-white/5 hover:bg-white/10 border-white/10 text-zinc-300 hover:text-white'
+            }`}
             title="Force Sync"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -725,7 +737,11 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                 key={teammate.id}
                 className={`p-4 rounded-xl border backdrop-blur-2xl transition-all flex flex-col justify-between gap-3 shadow-xl ${
                   isMe
-                    ? 'border-[#E50920]/60 bg-[#161218] shadow-md shadow-[#E50920]/15'
+                    ? theme === 'light'
+                      ? 'border-[#E50920] bg-rose-50/60 shadow-md shadow-[#E50920]/10'
+                      : 'border-[#E50920]/60 bg-[#161218] shadow-md shadow-[#E50920]/15'
+                    : theme === 'light'
+                    ? 'border-black/10 bg-white/95 hover:border-black/25 shadow-black/5'
                     : 'border-white/10 bg-[#0E0F14] hover:border-white/25 shadow-black/50'
                 }`}
               >
@@ -740,14 +756,20 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                           className="w-10 h-10 rounded-xl object-cover border border-white/15"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center font-bold text-white text-xs border border-white/10">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs border ${
+                          theme === 'light'
+                            ? 'bg-zinc-200 text-zinc-800 border-zinc-300'
+                            : 'bg-gradient-to-br from-zinc-700 to-zinc-900 text-white border-white/10'
+                        }`}>
                           {teammate.fullName.slice(0, 2).toUpperCase()}
                         </div>
                       )}
                       {/* Presence Dot */}
                       <span
-                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#0B0C10] ${
-                          teammate.isOnline ? 'bg-emerald-400' : 'bg-zinc-600'
+                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 ${
+                          theme === 'light' ? 'border-white' : 'border-[#0B0C10]'
+                        } ${
+                          teammate.isOnline ? 'bg-emerald-400' : 'bg-zinc-500'
                         }`}
                         title={teammate.isOnline ? 'Online Now' : 'Offline'}
                       />
@@ -755,25 +777,31 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-white truncate max-w-[120px]">
+                        <span className={`text-xs font-bold truncate max-w-[120px] ${
+                          theme === 'light' ? 'text-zinc-900' : 'text-white'
+                        }`}>
                           {teammate.fullName}
                         </span>
                         {isMe && (
-                          <span className="text-[9px] font-mono px-1 rounded bg-[#E50920]/20 text-[#E50920]">
+                          <span className="text-[9px] font-mono px-1 rounded bg-[#E50920]/20 text-[#E50920] font-bold">
                             YOU
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] font-mono text-zinc-400 block truncate">
+                      <span className={`text-[10px] font-mono block truncate ${
+                        theme === 'light' ? 'text-zinc-500' : 'text-zinc-400'
+                      }`}>
                         {teammate.department || 'Computer Science'}
                       </span>
                     </div>
                   </div>
 
                   <span
-                    className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
+                    className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-semibold ${
                       teammate.isOnline
-                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                        ? 'bg-emerald-500/15 text-emerald-600 border border-emerald-500/30'
+                        : theme === 'light'
+                        ? 'bg-black/5 text-zinc-500'
                         : 'bg-white/5 text-zinc-500'
                     }`}
                   >
@@ -782,22 +810,32 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                 </div>
 
                 {/* Latest Project Work */}
-                <div className="p-2.5 rounded-lg bg-[#07070A] border border-white/10 text-[11px] font-mono">
-                  <span className="text-zinc-500 block text-[9px] uppercase tracking-wider mb-0.5">
+                <div className={`p-2.5 rounded-lg border text-[11px] font-mono ${
+                  theme === 'light'
+                    ? 'bg-zinc-50 border-black/10'
+                    : 'bg-[#07070A] border-white/10'
+                }`}>
+                  <span className={`block text-[9px] uppercase tracking-wider mb-0.5 ${
+                    theme === 'light' ? 'text-zinc-500' : 'text-zinc-500'
+                  }`}>
                     Current Milestone:
                   </span>
                   {teammate.latestProject ? (
                     <div>
-                      <div className="text-zinc-200 font-semibold line-clamp-1">
+                      <div className={`font-semibold line-clamp-1 ${
+                        theme === 'light' ? 'text-zinc-900' : 'text-zinc-200'
+                      }`}>
                         {teammate.latestProject.title}
                       </div>
-                      <div className="flex items-center justify-between text-[10px] text-zinc-400 mt-1">
-                        <span>{teammate.latestProject.progress}% complete</span>
-                        <span className="text-[#E50920]">{teammate.latestProject.domain}</span>
+                      <div className="flex items-center justify-between text-[10px] mt-1">
+                        <span className={theme === 'light' ? 'text-zinc-600' : 'text-zinc-400'}>
+                          {teammate.latestProject.progress}% complete
+                        </span>
+                        <span className="text-[#E50920] font-semibold">{teammate.latestProject.domain}</span>
                       </div>
                     </div>
                   ) : (
-                    <span className="text-zinc-500 italic">No project submissions yet</span>
+                    <span className="text-zinc-400 italic">No project submissions yet</span>
                   )}
                 </div>
 
@@ -808,7 +846,11 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                       setActiveTeammate(teammate);
                       setChatMode('direct');
                     }}
-                    className="w-full py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#E50920]/40 text-xs font-mono text-zinc-300 hover:text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    className={`w-full py-1.5 px-3 rounded-lg border flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-xs font-mono ${
+                      theme === 'light'
+                        ? 'bg-black/5 hover:bg-black/10 border-black/10 text-zinc-800 hover:text-black'
+                        : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-[#E50920]/40 text-zinc-300 hover:text-white'
+                    }`}
                   >
                     <MessageSquare className="w-3 h-3 text-[#E50920]" />
                     <span>Private Message</span>
@@ -822,13 +864,23 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
           {Array.from({ length: Math.max(0, 4 - teammates.length) }).map((_, idx) => (
             <div
               key={`empty-${idx}`}
-              className="p-4 rounded-xl border border-dashed border-white/10 bg-[#0E0F14] backdrop-blur-xl flex flex-col items-center justify-center gap-2 text-center min-h-[140px]"
+              className={`p-4 rounded-xl border border-dashed flex flex-col items-center justify-center gap-2 text-center min-h-[140px] ${
+                theme === 'light'
+                  ? 'border-black/15 bg-white/70'
+                  : 'border-white/10 bg-[#0E0F14] backdrop-blur-xl'
+              }`}
             >
-              <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-600">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                theme === 'light' ? 'bg-black/5 text-zinc-400' : 'bg-white/5 text-zinc-600'
+              }`}>
                 <Users className="w-4 h-4" />
               </div>
-              <span className="text-xs font-mono text-zinc-500">Seat {teammates.length + idx + 1} Open</span>
-              <span className="text-[10px] font-mono text-zinc-600">Awaiting Coordinator Allocation</span>
+              <span className={`text-xs font-mono ${theme === 'light' ? 'text-zinc-600' : 'text-zinc-500'}`}>
+                Seat {teammates.length + idx + 1} Open
+              </span>
+              <span className={`text-[10px] font-mono ${theme === 'light' ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                Awaiting Coordinator Allocation
+              </span>
             </div>
           ))}
         </div>
@@ -838,12 +890,20 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* ================= LEFT (7 Cols): LIVE ACTIVITY FEED ================= */}
         <div className="lg:col-span-7 flex flex-col gap-4">
-          <div className="p-5 rounded-2xl border border-white/10 bg-[#0B0C10]/95 backdrop-blur-xl shadow-xl flex flex-col gap-4">
+          <div className={`p-5 rounded-2xl border backdrop-blur-xl shadow-xl flex flex-col gap-4 ${
+            theme === 'light'
+              ? 'bg-white/95 border-black/10 shadow-black/5'
+              : 'bg-[#0B0C10]/95 border-white/10 shadow-black/50'
+          }`}>
             {/* Feed Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/10">
+            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b ${
+              theme === 'light' ? 'border-black/10' : 'border-white/10'
+            }`}>
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-[#E50920]" />
-                <h3 className="text-sm font-bold font-display text-white">Live Project Activity Stream</h3>
+                <h3 className={`text-sm font-bold font-display ${theme === 'light' ? 'text-zinc-900' : 'text-white'}`}>
+                  Live Project Activity Stream
+                </h3>
               </div>
 
               {/* Filter Pills */}
@@ -855,6 +915,8 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                     className={`px-2.5 py-1 rounded-lg text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
                       activityFilter === f
                         ? 'bg-[#E50920] text-white font-bold'
+                        : theme === 'light'
+                        ? 'bg-black/5 text-zinc-600 hover:text-black border border-black/10'
                         : 'bg-white/5 text-zinc-400 hover:text-white'
                     }`}
                   >
@@ -867,7 +929,7 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
             {/* Activities List */}
             <div className="flex flex-col gap-3 max-h-[520px] overflow-y-auto pr-1">
               {filteredActivities.length === 0 ? (
-                <div className="p-8 text-center text-zinc-500 font-mono text-xs">
+                <div className={`p-8 text-center font-mono text-xs ${theme === 'light' ? 'text-zinc-400' : 'text-zinc-500'}`}>
                   No project activities logged for this filter yet.
                 </div>
               ) : (
@@ -875,7 +937,11 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                   return (
                     <div
                       key={act.id}
-                      className="p-3.5 rounded-xl border border-white/5 bg-black/40 hover:border-white/15 transition-all flex flex-col gap-2"
+                      className={`p-3.5 rounded-xl border transition-all flex flex-col gap-2 ${
+                        theme === 'light'
+                          ? 'bg-zinc-50/90 border-black/10 hover:border-[#E50920]/40'
+                          : 'border-white/5 bg-black/40 hover:border-white/15'
+                      }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2.5">
@@ -891,22 +957,32 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                             )}
                           </div>
                           <div>
-                            <span className="text-xs font-bold text-white block">{act.userName}</span>
-                            <span className="text-[10px] font-mono text-zinc-400">
+                            <span className={`text-xs font-bold block ${theme === 'light' ? 'text-zinc-900' : 'text-white'}`}>
+                              {act.userName}
+                            </span>
+                            <span className={`text-[10px] font-mono ${theme === 'light' ? 'text-zinc-500' : 'text-zinc-400'}`}>
                               {new Date(act.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} •{' '}
                               {new Date(act.timestamp).toLocaleDateString()}
                             </span>
                           </div>
                         </div>
 
-                        <span className="text-[9px] font-mono px-2 py-0.5 rounded uppercase font-semibold bg-white/5 text-zinc-300 border border-white/10">
+                        <span className={`text-[9px] font-mono px-2 py-0.5 rounded uppercase font-semibold border ${
+                          theme === 'light'
+                            ? 'bg-black/5 text-zinc-700 border-black/10'
+                            : 'bg-white/5 text-zinc-300 border-white/10'
+                        }`}>
                           {act.actionType}
                         </span>
                       </div>
 
-                      <p className="text-xs font-mono text-zinc-200 pl-9">{act.title}</p>
+                      <p className={`text-xs font-mono pl-9 ${theme === 'light' ? 'text-zinc-800' : 'text-zinc-200'}`}>
+                        {act.title}
+                      </p>
                       {act.details && (
-                        <p className="text-[11px] font-mono text-zinc-400 pl-9 leading-relaxed whitespace-pre-wrap">
+                        <p className={`text-[11px] font-mono pl-9 leading-relaxed whitespace-pre-wrap ${
+                          theme === 'light' ? 'text-zinc-600' : 'text-zinc-400'
+                        }`}>
                           {act.details}
                         </p>
                       )}
@@ -934,15 +1010,25 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
 
         {/* ================= RIGHT (5 Cols): TEAM MESSAGING SYSTEM ================= */}
         <div className="lg:col-span-5 flex flex-col gap-4">
-          <div className="p-5 rounded-2xl border border-white/10 bg-[#0B0C10]/95 backdrop-blur-xl shadow-xl flex flex-col h-[600px]">
+          <div className={`p-5 rounded-2xl border backdrop-blur-xl shadow-xl flex flex-col h-[600px] ${
+            theme === 'light'
+              ? 'bg-white/95 border-black/10 shadow-black/5'
+              : 'bg-[#0B0C10]/95 border-white/10 shadow-black/50'
+          }`}>
             {/* Chat Mode Switcher Tabs */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/50 border border-white/10">
+            <div className={`flex items-center justify-between pb-3 border-b ${
+              theme === 'light' ? 'border-black/10' : 'border-white/10'
+            }`}>
+              <div className={`flex items-center gap-1.5 p-1 rounded-xl border ${
+                theme === 'light' ? 'bg-zinc-100 border-black/10' : 'bg-black/50 border-white/10'
+              }`}>
                 <button
                   onClick={() => setChatMode('group')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-all cursor-pointer ${
                     chatMode === 'group'
                       ? 'bg-[#E50920] text-white font-bold shadow-md shadow-[#E50920]/30'
+                      : theme === 'light'
+                      ? 'text-zinc-600 hover:text-black'
                       : 'text-zinc-400 hover:text-white'
                   }`}
                 >
@@ -955,6 +1041,8 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-all cursor-pointer ${
                     chatMode === 'direct'
                       ? 'bg-[#E50920] text-white font-bold shadow-md shadow-[#E50920]/30'
+                      : theme === 'light'
+                      ? 'text-zinc-600 hover:text-black'
                       : 'text-zinc-400 hover:text-white'
                   }`}
                 >
@@ -968,15 +1056,21 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                 className="flex items-center gap-1 text-[10px] font-mono text-zinc-400"
                 title="Strict database-level encryption & authorized participant gating"
               >
-                <Lock className="w-3 h-3 text-emerald-400" />
-                <span className="text-emerald-400 font-semibold">Private</span>
+                <Lock className="w-3 h-3 text-emerald-500" />
+                <span className="text-emerald-600 font-semibold">Private</span>
               </div>
             </div>
 
             {/* Direct Message Teammate Selector when in Direct Mode */}
             {chatMode === 'direct' && (
-              <div className="py-2.5 px-1 border-b border-white/10 flex items-center gap-2 overflow-x-auto scrollbar-none">
-                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider shrink-0">Chat With:</span>
+              <div className={`py-2.5 px-1 border-b flex items-center gap-2 overflow-x-auto scrollbar-none ${
+                theme === 'light' ? 'border-black/10' : 'border-white/10'
+              }`}>
+                <span className={`text-[10px] font-mono uppercase tracking-wider shrink-0 ${
+                  theme === 'light' ? 'text-zinc-500' : 'text-zinc-500'
+                }`}>
+                  Chat With:
+                </span>
                 {teammates
                   .filter((t) => t.id !== currentUser.id)
                   .map((t) => {
@@ -988,10 +1082,12 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono transition-all shrink-0 cursor-pointer ${
                           isSelected
                             ? 'bg-[#E50920] text-white font-bold'
+                            : theme === 'light'
+                            ? 'bg-black/5 text-zinc-700 hover:text-black border border-black/10'
                             : 'bg-white/5 text-zinc-300 hover:text-white border border-white/10'
                         }`}
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full ${t.isOnline ? 'bg-emerald-400' : 'bg-zinc-500'}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${t.isOnline ? 'bg-emerald-400' : 'bg-zinc-400'}`} />
                         <span>{t.fullName}</span>
                       </button>
                     );
@@ -1000,12 +1096,18 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
             )}
 
             {/* Chat Target Subtitle and Action Header */}
-            <div className="py-2 text-[11px] font-mono text-zinc-400 flex items-center justify-between gap-2 border-b border-white/5">
+            <div className={`py-2 text-[11px] font-mono flex items-center justify-between gap-2 border-b ${
+              theme === 'light' ? 'text-zinc-600 border-black/10' : 'text-zinc-400 border-white/5'
+            }`}>
               <div className="flex items-center gap-1.5 overflow-hidden">
                 {chatMode === 'group' ? (
-                  <span className="truncate">Talking to: <strong className="text-white">{group?.name}</strong></span>
+                  <span className="truncate">
+                    Talking to: <strong className={theme === 'light' ? 'text-zinc-900' : 'text-white'}>{group?.name}</strong>
+                  </span>
                 ) : activeTeammate ? (
-                  <span className="truncate">Private thread: <strong className="text-white">{activeTeammate.fullName}</strong></span>
+                  <span className="truncate">
+                    Private thread: <strong className={theme === 'light' ? 'text-zinc-900' : 'text-white'}>{activeTeammate.fullName}</strong>
+                  </span>
                 ) : (
                   <span>Select a teammate to message</span>
                 )}
@@ -1019,9 +1121,13 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                   onClick={handleClearChat}
                   disabled={isClearingChat}
                   title="Clear conversation history"
-                  className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono text-zinc-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all cursor-pointer shrink-0 disabled:opacity-50"
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono border transition-all cursor-pointer shrink-0 disabled:opacity-50 ${
+                    theme === 'light'
+                      ? 'text-zinc-600 hover:text-red-600 hover:bg-red-50 border-black/10 hover:border-red-300'
+                      : 'text-zinc-400 hover:text-red-400 hover:bg-red-500/10 border-transparent hover:border-red-500/20'
+                  }`}
                 >
-                  <Trash2 className="w-3 h-3 text-red-400/80" />
+                  <Trash2 className="w-3 h-3 text-red-500" />
                   <span className="hidden xs:inline sm:inline">Clear Chat</span>
                 </button>
               )}
@@ -1031,7 +1137,7 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
             <div ref={messagesContainerRef} className="flex-1 overflow-y-auto space-y-3 py-2 pr-1 max-h-[380px] min-h-[300px]">
               {chatMode === 'group' ? (
                 groupMessages.length === 0 ? (
-                  <div className="p-8 text-center text-zinc-500 font-mono text-xs">
+                  <div className={`p-8 text-center font-mono text-xs ${theme === 'light' ? 'text-zinc-400' : 'text-zinc-500'}`}>
                     No messages in group discussion yet. Start the conversation!
                   </div>
                 ) : (
@@ -1043,19 +1149,31 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                         key={msg.id}
                         className={`flex flex-col group/msg ${isMe ? 'items-end' : 'items-start'}`}
                       >
-                        <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-400 mb-0.5 px-1">
-                          <span className={isMe ? 'text-[#E50920] font-bold' : 'text-zinc-300'}>{msg.senderName}</span>
+                        <div className={`flex items-center gap-1.5 text-[10px] font-mono mb-0.5 px-1 ${
+                          theme === 'light' ? 'text-zinc-500' : 'text-zinc-400'
+                        }`}>
+                          <span className={isMe ? 'text-[#E50920] font-bold' : theme === 'light' ? 'text-zinc-800 font-semibold' : 'text-zinc-300'}>
+                            {msg.senderName}
+                          </span>
                           <span>•</span>
                           <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          {msg.isEdited && <span className="text-zinc-500 italic text-[9px]">(edited)</span>}
+                          {msg.isEdited && <span className="text-zinc-400 italic text-[9px]">(edited)</span>}
                         </div>
 
                         {isEditing ? (
-                          <div className="w-full max-w-[95%] sm:max-w-[85%] p-2 rounded-xl bg-black/80 border border-[#E50920]/40 flex flex-col gap-2">
+                          <div className={`w-full max-w-[95%] sm:max-w-[85%] p-2 rounded-xl border flex flex-col gap-2 ${
+                            theme === 'light'
+                              ? 'bg-white border-black/20 shadow-md'
+                              : 'bg-black/80 border-[#E50920]/40'
+                          }`}>
                             <textarea
                               value={editingContent}
                               onChange={(e) => setEditingContent(e.target.value)}
-                              className="w-full p-2 rounded-lg bg-zinc-900 text-xs text-white border border-white/10 focus:border-[#E50920] focus:outline-none resize-none font-sans"
+                              className={`w-full p-2 rounded-lg text-xs border focus:border-[#E50920] focus:outline-none resize-none font-sans ${
+                                theme === 'light'
+                                  ? 'bg-zinc-50 text-zinc-900 border-black/15'
+                                  : 'bg-zinc-900 text-white border-white/10'
+                              }`}
                               rows={2}
                               autoFocus
                             />
@@ -1066,7 +1184,9 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                                   setEditingMessageId(null);
                                   setEditingContent('');
                                 }}
-                                className="px-2 py-1 rounded text-[10px] font-mono text-zinc-400 hover:text-white cursor-pointer"
+                                className={`px-2 py-1 rounded text-[10px] font-mono cursor-pointer ${
+                                  theme === 'light' ? 'text-zinc-600 hover:text-black' : 'text-zinc-400 hover:text-white'
+                                }`}
                               >
                                 Cancel
                               </button>
@@ -1085,7 +1205,11 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                           <div className="relative group/bubble max-w-[92%] sm:max-w-[85%] flex items-start gap-1">
                             {/* Actions for sender (Edit / Delete) */}
                             {isMe && (
-                              <div className="opacity-0 group-hover/msg:opacity-100 flex items-center gap-0.5 self-center shrink-0 transition-opacity bg-black/60 p-0.5 rounded-lg border border-white/10">
+                              <div className={`opacity-0 group-hover/msg:opacity-100 flex items-center gap-0.5 self-center shrink-0 transition-opacity p-0.5 rounded-lg border ${
+                                theme === 'light'
+                                  ? 'bg-white/90 border-black/10 shadow-sm'
+                                  : 'bg-black/60 border-white/10'
+                              }`}>
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -1093,7 +1217,9 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                                     setEditingContent(msg.content);
                                   }}
                                   title="Edit message"
-                                  className="p-1 hover:text-white text-zinc-400 hover:bg-white/10 rounded transition-colors cursor-pointer"
+                                  className={`p-1 rounded transition-colors cursor-pointer ${
+                                    theme === 'light' ? 'text-zinc-600 hover:text-black hover:bg-black/5' : 'text-zinc-400 hover:text-white hover:bg-white/10'
+                                  }`}
                                 >
                                   <Edit2 className="w-2.5 h-2.5" />
                                 </button>
@@ -1101,7 +1227,7 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                                   type="button"
                                   onClick={() => handleDeleteMessage(msg.id)}
                                   title="Delete message"
-                                  className="p-1 hover:text-red-400 text-zinc-400 hover:bg-red-500/10 rounded transition-colors cursor-pointer"
+                                  className="p-1 hover:text-red-500 text-zinc-400 hover:bg-red-50 rounded transition-colors cursor-pointer"
                                 >
                                   <Trash2 className="w-2.5 h-2.5" />
                                 </button>
@@ -1112,6 +1238,8 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                               className={`p-2.5 sm:p-3 rounded-2xl text-xs font-sans leading-relaxed whitespace-pre-wrap break-words ${
                                 isMe
                                   ? 'bg-[#E50920] text-white rounded-tr-sm shadow-md shadow-[#E50920]/20'
+                                  : theme === 'light'
+                                  ? 'bg-zinc-100 text-zinc-900 rounded-tl-sm border border-black/10'
                                   : 'bg-zinc-800/90 text-zinc-100 rounded-tl-sm border border-white/10'
                               }`}
                             >
@@ -1126,7 +1254,7 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
               ) : (
                 /* Direct Messages Thread */
                 directMessages.length === 0 ? (
-                  <div className="p-8 text-center text-zinc-500 font-mono text-xs">
+                  <div className={`p-8 text-center font-mono text-xs ${theme === 'light' ? 'text-zinc-400' : 'text-zinc-500'}`}>
                     No private messages with {activeTeammate?.fullName || 'this teammate'} yet. Send a direct message!
                   </div>
                 ) : (
@@ -1138,19 +1266,31 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                         key={msg.id}
                         className={`flex flex-col group/msg ${isMe ? 'items-end' : 'items-start'}`}
                       >
-                        <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-400 mb-0.5 px-1">
-                          <span className={isMe ? 'text-[#E50920] font-bold' : 'text-zinc-300'}>{msg.senderName}</span>
+                        <div className={`flex items-center gap-1.5 text-[10px] font-mono mb-0.5 px-1 ${
+                          theme === 'light' ? 'text-zinc-500' : 'text-zinc-400'
+                        }`}>
+                          <span className={isMe ? 'text-[#E50920] font-bold' : theme === 'light' ? 'text-zinc-800 font-semibold' : 'text-zinc-300'}>
+                            {msg.senderName}
+                          </span>
                           <span>•</span>
                           <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          {msg.isEdited && <span className="text-zinc-500 italic text-[9px]">(edited)</span>}
+                          {msg.isEdited && <span className="text-zinc-400 italic text-[9px]">(edited)</span>}
                         </div>
 
                         {isEditing ? (
-                          <div className="w-full max-w-[95%] sm:max-w-[85%] p-2 rounded-xl bg-black/80 border border-[#E50920]/40 flex flex-col gap-2">
+                          <div className={`w-full max-w-[95%] sm:max-w-[85%] p-2 rounded-xl border flex flex-col gap-2 ${
+                            theme === 'light'
+                              ? 'bg-white border-black/20 shadow-md'
+                              : 'bg-black/80 border-[#E50920]/40'
+                          }`}>
                             <textarea
                               value={editingContent}
                               onChange={(e) => setEditingContent(e.target.value)}
-                              className="w-full p-2 rounded-lg bg-zinc-900 text-xs text-white border border-white/10 focus:border-[#E50920] focus:outline-none resize-none font-sans"
+                              className={`w-full p-2 rounded-lg text-xs border focus:border-[#E50920] focus:outline-none resize-none font-sans ${
+                                theme === 'light'
+                                  ? 'bg-zinc-50 text-zinc-900 border-black/15'
+                                  : 'bg-zinc-900 text-white border-white/10'
+                              }`}
                               rows={2}
                               autoFocus
                             />
@@ -1161,7 +1301,9 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                                   setEditingMessageId(null);
                                   setEditingContent('');
                                 }}
-                                className="px-2 py-1 rounded text-[10px] font-mono text-zinc-400 hover:text-white cursor-pointer"
+                                className={`px-2 py-1 rounded text-[10px] font-mono cursor-pointer ${
+                                  theme === 'light' ? 'text-zinc-600 hover:text-black' : 'text-zinc-400 hover:text-white'
+                                }`}
                               >
                                 Cancel
                               </button>
@@ -1180,7 +1322,11 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                           <div className="relative group/bubble max-w-[92%] sm:max-w-[85%] flex items-start gap-1">
                             {/* Actions for sender (Edit / Delete) */}
                             {isMe && (
-                              <div className="opacity-0 group-hover/msg:opacity-100 flex items-center gap-0.5 self-center shrink-0 transition-opacity bg-black/60 p-0.5 rounded-lg border border-white/10">
+                              <div className={`opacity-0 group-hover/msg:opacity-100 flex items-center gap-0.5 self-center shrink-0 transition-opacity p-0.5 rounded-lg border ${
+                                theme === 'light'
+                                  ? 'bg-white/90 border-black/10 shadow-sm'
+                                  : 'bg-black/60 border-white/10'
+                              }`}>
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -1188,7 +1334,9 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                                     setEditingContent(msg.content);
                                   }}
                                   title="Edit message"
-                                  className="p-1 hover:text-white text-zinc-400 hover:bg-white/10 rounded transition-colors cursor-pointer"
+                                  className={`p-1 rounded transition-colors cursor-pointer ${
+                                    theme === 'light' ? 'text-zinc-600 hover:text-black hover:bg-black/5' : 'text-zinc-400 hover:text-white hover:bg-white/10'
+                                  }`}
                                 >
                                   <Edit2 className="w-2.5 h-2.5" />
                                 </button>
@@ -1196,7 +1344,7 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                                   type="button"
                                   onClick={() => handleDeleteMessage(msg.id)}
                                   title="Delete message"
-                                  className="p-1 hover:text-red-400 text-zinc-400 hover:bg-red-500/10 rounded transition-colors cursor-pointer"
+                                  className="p-1 hover:text-red-500 text-zinc-400 hover:bg-red-50 rounded transition-colors cursor-pointer"
                                 >
                                   <Trash2 className="w-2.5 h-2.5" />
                                 </button>
@@ -1207,6 +1355,8 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                               className={`p-2.5 sm:p-3 rounded-2xl text-xs font-sans leading-relaxed whitespace-pre-wrap break-words ${
                                 isMe
                                   ? 'bg-[#E50920] text-white rounded-tr-sm shadow-md shadow-[#E50920]/20'
+                                  : theme === 'light'
+                                  ? 'bg-zinc-100 text-zinc-900 rounded-tl-sm border border-black/10'
                                   : 'bg-zinc-800/90 text-zinc-100 rounded-tl-sm border border-white/10'
                               }`}
                             >
@@ -1222,7 +1372,9 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
             </div>
 
             {/* Message Input Box */}
-            <form onSubmit={handleSendMessage} className="pt-3 border-t border-white/10 flex items-center gap-2">
+            <form onSubmit={handleSendMessage} className={`pt-3 border-t flex items-center gap-2 ${
+              theme === 'light' ? 'border-black/10' : 'border-white/10'
+            }`}>
               <input
                 type="text"
                 value={messageInput}
@@ -1232,7 +1384,11 @@ export const TeamCollaborationHub: React.FC<TeamCollaborationHubProps> = ({
                     ? `Message ${group?.name}...`
                     : `Private message to ${activeTeammate?.fullName || 'teammate'}...`
                 }
-                className="flex-1 px-4 py-2.5 rounded-xl bg-black/60 border border-white/10 focus:border-[#E50920]/60 text-xs font-sans text-white placeholder-zinc-500 focus:outline-none transition-colors"
+                className={`flex-1 px-4 py-2.5 rounded-xl border text-xs font-sans focus:outline-none transition-colors ${
+                  theme === 'light'
+                    ? 'bg-zinc-50 border-black/15 text-zinc-900 placeholder-zinc-400 focus:border-[#E50920]'
+                    : 'bg-black/60 border-white/10 text-white placeholder-zinc-500 focus:border-[#E50920]/60'
+                }`}
               />
               <button
                 type="submit"

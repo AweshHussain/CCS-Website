@@ -780,6 +780,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             currentUser={currentUser}
             token={token}
             onRefreshUser={fetchData}
+            theme={theme}
           />
         )}
 
