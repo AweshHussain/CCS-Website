@@ -143,7 +143,7 @@ export const CoordinatorNavbar: React.FC<CoordinatorNavbarProps> = ({
         >
           <div className="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center transition-transform duration-300 group-hover:scale-105 shrink-0">
             <img
-              src="/ccs_official_logo.png"
+              src={theme === 'light' ? '/ccs_emblem_red.png' : '/ccs_emblem_white.png'}
               alt="CCS Logo"
               className="w-full h-full object-contain filter group-hover:brightness-125 transition-all"
             />
