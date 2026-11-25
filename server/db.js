@@ -50,6 +50,8 @@ const userSchema = new mongoose.Schema(
         canManageAccounts: false,
       }),
     },
+    resetOtp: { type: String, default: null },
+    resetOtpExpires: { type: Number, default: null },
     createdAt: { type: String, default: () => new Date().toISOString() },
     updatedAt: { type: String, default: () => new Date().toISOString() },
   },
@@ -698,6 +700,52 @@ export const db = {
     const filtered = local.filter((u) => u.id !== id);
     if (filtered.length === local.length) return false;
     writeJson(DB_USERS_FILE, filtered);
+    return true;
+  },
+
+  // Set password reset OTP (valid for 10 minutes)
+  setResetOtp: async (email, otpCode, expiresAt) => {
+    const cleanEmail = email.toLowerCase().trim();
+    if (isMongoConnected) {
+      try {
+        await UserModel.updateOne(
+          { email: cleanEmail },
+          { $set: { resetOtp: otpCode, resetOtpExpires: expiresAt } }
+        );
+      } catch (err) {
+        console.error('Mongo setResetOtp error:', err.message);
+      }
+    }
+    const local = readJson(DB_USERS_FILE, SEED_USERS);
+    const user = local.find((u) => u.email.toLowerCase() === cleanEmail);
+    if (user) {
+      user.resetOtp = otpCode;
+      user.resetOtpExpires = expiresAt;
+      writeJson(DB_USERS_FILE, local);
+    }
+    return true;
+  },
+
+  // Clear reset OTP after successful reset
+  clearResetOtp: async (email) => {
+    const cleanEmail = email.toLowerCase().trim();
+    if (isMongoConnected) {
+      try {
+        await UserModel.updateOne(
+          { email: cleanEmail },
+          { $set: { resetOtp: null, resetOtpExpires: null } }
+        );
+      } catch (err) {
+        console.error('Mongo clearResetOtp error:', err.message);
+      }
+    }
+    const local = readJson(DB_USERS_FILE, SEED_USERS);
+    const user = local.find((u) => u.email.toLowerCase() === cleanEmail);
+    if (user) {
+      user.resetOtp = null;
+      user.resetOtpExpires = null;
+      writeJson(DB_USERS_FILE, local);
+    }
     return true;
   },
 

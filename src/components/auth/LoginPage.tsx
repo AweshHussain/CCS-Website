@@ -37,6 +37,7 @@ import { CoordinatorNavbar, CoordinatorTabType } from './CoordinatorNavbar';
 import { CoordinatorLandingPage } from './CoordinatorLandingPage';
 import { ChangePasswordModal } from './ChangePasswordModal';
 import { ChangeEmailModal } from './ChangeEmailModal';
+import { ForgotPasswordModal } from './ForgotPasswordModal';
 import { StudentWorkPanel } from './StudentWorkPanel';
 import { CoordinatorTaskDirectivesPanel } from './CoordinatorTaskDirectivesPanel';
 import { PortalSettingsPanel } from './PortalSettingsPanel';
@@ -135,6 +136,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
   const [coordinatorTab, setCoordinatorTab] = useState<CoordinatorTabType>('dashboard');
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showChangeEmailModal, setShowChangeEmailModal] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [pendingSubmissionsCount, setPendingSubmissionsCount] = useState(0);
   const [activeDirectivesCount, setActiveDirectivesCount] = useState(0);
   const [totalUsersCount, setTotalUsersCount] = useState(0);
@@ -772,9 +774,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
                         href="#forgot"
                         onClick={(e) => {
                           e.preventDefault();
-                          alert('Password reset requests require coordinator desk approval or contacting tech@ccs-society.org');
+                          setShowForgotPasswordModal(true);
                         }}
-                        className="text-[9px] font-mono text-[#E50920] hover:underline"
+                        className="text-[9px] font-mono text-[#E50920] hover:underline cursor-pointer"
                       >
                         Forgot?
                       </a>
@@ -984,6 +986,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ theme, onToggleTheme, onBa
       <div className="max-w-4xl mx-auto w-full pt-4 text-center text-[11px] font-mono text-zinc-500 relative z-10">
         <span>Code & Compute Society (CCS) Central Access Management • All sessions cryptographically verified</span>
       </div>
+
+      {/* Forgot Password OTP Verification & Reset Modal */}
+      <ForgotPasswordModal
+        isOpen={showForgotPasswordModal}
+        onClose={() => setShowForgotPasswordModal(false)}
+        initialEmail={email}
+        theme={theme}
+      />
     </div>
   );
 };

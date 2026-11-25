@@ -8,6 +8,7 @@ import { db } from '../db.js';
 import { generateToken, verifyToken } from '../middleware/auth.js';
 import { encryptPassword } from '../utils/crypto.js';
 import { markUserActive, markUserOffline } from '../presence.js';
+import { sendPasswordResetOtpEmail } from '../services/emailService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -422,6 +423,119 @@ router.post('/refresh-session', verifyToken, async (req, res) => {
           canManageAccounts: user.role === 'coordinator',
         },
       },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ==============================================================
+// POST /api/auth/forgot-password - Generate & Send 6-digit OTP
+// ==============================================================
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || !email.trim()) {
+      return res.status(400).json({ success: false, message: 'Please enter your account email.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await db.findUserByEmail(cleanEmail);
+    if (!user) {
+      // Security standard: don't reveal account non-existence explicitly to prevent email enumeration,
+      // but report friendly message.
+      return res.status(200).json({
+        success: true,
+        message: 'If an account exists with this email, a 6-digit OTP has been sent.',
+      });
+    }
+
+    // Generate random secure 6-digit numeric OTP
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes from now
+
+    await db.setResetOtp(cleanEmail, otpCode, expiresAt);
+
+    const emailResult = await sendPasswordResetOtpEmail({
+      recipientEmail: user.email,
+      recipientName: user.fullName,
+      otpCode,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'A 6-digit verification code has been sent to your email.',
+      emailSimulated: emailResult.simulated || false,
+      devOtp: emailResult.simulated ? otpCode : undefined,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ==============================================================
+// POST /api/auth/reset-password - Verify OTP & Set New Password
+// ==============================================================
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email, 6-digit verification code, and new password are required.',
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters long.',
+      });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanOtp = otp.toString().trim();
+    const user = await db.findUserByEmail(cleanEmail);
+
+    if (!user || !user.resetOtp || !user.resetOtpExpires) {
+      return res.status(400).json({
+        success: false,
+        message: 'No active password reset request found for this email. Please request a new OTP.',
+      });
+    }
+
+    if (Date.now() > user.resetOtpExpires) {
+      await db.clearResetOtp(cleanEmail);
+      return res.status(400).json({
+        success: false,
+        message: 'Verification code has expired. Please request a new one.',
+      });
+    }
+
+    if (user.resetOtp !== cleanOtp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Incorrect verification code. Please check your email and try again.',
+      });
+    }
+
+    // Valid OTP! Hash new password with bcrypt and update vaultCipher
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(newPassword, salt);
+    const vaultCipher = encryptPassword(newPassword);
+
+    await db.updateUser(user.id, {
+      passwordHash,
+      vaultCipher,
+      resetOtp: null,
+      resetOtpExpires: null,
+    });
+
+    await db.clearResetOtp(cleanEmail);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password reset successful! You can now log in with your new password.',
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

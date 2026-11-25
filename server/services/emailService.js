@@ -159,3 +159,105 @@ Code & Compute Society
     return { success: false, error: error.message };
   }
 };
+
+/**
+ * Send 6-Digit Password Reset OTP Email
+ */
+export const sendPasswordResetOtpEmail = async ({
+  recipientEmail,
+  recipientName,
+  otpCode,
+}) => {
+  const subject = `Your CCS Account Password Reset Code: ${otpCode}`;
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0B0C10; color: #FFFFFF; margin: 0; padding: 24px; }
+    .card { max-width: 540px; margin: 0 auto; background-color: #12131A; border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .header { background: linear-gradient(135deg, #E50920 0%, #87000F 100%); padding: 24px; text-align: center; }
+    .header h1 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: 1px; color: #FFFFFF; text-transform: uppercase; }
+    .header p { margin: 6px 0 0; font-size: 12px; color: rgba(255,255,255,0.85); }
+    .content { padding: 28px 24px; color: #E4E4E7; font-size: 14px; line-height: 1.6; }
+    .otp-container { text-align: center; margin: 24px 0; }
+    .otp-box { display: inline-block; background: rgba(229, 9, 32, 0.12); border: 2px dashed #E50920; border-radius: 12px; padding: 14px 28px; font-size: 32px; font-weight: 800; font-family: monospace; letter-spacing: 8px; color: #FFFFFF; text-shadow: 0 0 12px rgba(229, 9, 32, 0.6); }
+    .expiry { font-size: 12px; color: #F59E0B; margin-top: 8px; font-family: monospace; }
+    .footer { text-align: center; padding: 20px; font-size: 11px; color: #71717A; border-top: 1px solid rgba(255,255,255,0.08); background: #0E0F14; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>Code &amp; Compute Society</h1>
+      <p>Password Reset Verification</p>
+    </div>
+    <div class="content">
+      <p>Hi <strong>${recipientName || 'Member'}</strong>,</p>
+      <p>We received a request to reset the password for your Code &amp; Compute Society (CCS) portal account.</p>
+      <p>Please use the following 6-digit verification code to complete your password reset:</p>
+      
+      <div class="otp-container">
+        <div class="otp-box">${otpCode}</div>
+        <div class="expiry">⚠️ This code expires in 10 minutes.</div>
+      </div>
+
+      <p style="font-size: 12px; color: #A1A1AA;">
+        If you did not request a password reset, you can safely ignore this email. Your existing credentials remain completely secure.
+      </p>
+    </div>
+    <div class="footer">
+      Code &amp; Compute Society • Automated Identity Verification
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  const textContent = `
+Hi ${recipientName || 'Member'},
+
+We received a request to reset the password for your Code & Compute Society (CCS) portal account.
+
+Your 6-Digit Password Reset Code is: ${otpCode}
+
+This code expires in 10 minutes.
+
+If you did not request a password reset, please ignore this email.
+
+Code & Compute Society
+  `;
+
+  const transporter = getTransporter();
+
+  if (!transporter) {
+    console.log(`\n======================================================`);
+    console.log(`📨 [OTP EMAIL SIMULATION - NO SMTP CREDENTIALS SET]`);
+    console.log(`To: ${recipientEmail}`);
+    console.log(`Subject: ${subject}`);
+    console.log(`OTP Code: ${otpCode}`);
+    console.log(`======================================================\n`);
+    return {
+      success: true,
+      simulated: true,
+      message: `OTP preview logged (SMTP not configured). Code: ${otpCode}`,
+    };
+  }
+
+  try {
+    const info = await transporter.sendMail({
+      from: `"Code & Compute Society" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+      to: recipientEmail,
+      subject,
+      text: textContent,
+      html: htmlContent,
+    });
+    console.log(`✅ Password reset OTP successfully sent to ${recipientEmail} (MsgID: ${info.messageId})`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`❌ Failed to send password reset OTP to ${recipientEmail}:`, error.message);
+    return { success: false, error: error.message };
+  }
+};
