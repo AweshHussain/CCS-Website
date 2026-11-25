@@ -36,6 +36,7 @@
     "maxCapacity": 4,
     "createdById": "user-coordinator-1",
     "createdAt": "2026-11-25T03:25:19.746Z",
-    "updatedAt": "2026-11-25T05:47:52.566Z"
+    "updatedAt": "2026-11-25T05:47:52.566Z",
+    "clearedAt": "2026-11-25T10:50:28.230Z"
   }
 ]

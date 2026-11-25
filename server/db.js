@@ -40,6 +40,7 @@ const userSchema = new mongoose.Schema(
     avatarUrl: { type: String, default: '' },
     groupId: { type: String, default: null },
     groupName: { type: String, default: null },
+    clearedDirectChats: { type: Object, default: () => ({}) },
     permissions: {
       type: Object,
       default: () => ({
@@ -168,6 +169,7 @@ const groupSchema = new mongoose.Schema(
     memberIds: { type: [String], default: [] },
     maxCapacity: { type: Number, default: 4 },
     createdById: { type: String, default: '' },
+    clearedAt: { type: String, default: null },
     createdAt: { type: String, default: () => new Date().toISOString() },
     updatedAt: { type: String, default: () => new Date().toISOString() },
   },
@@ -1267,43 +1269,68 @@ export const db = {
   // --- Team Messages (Group & Direct Private Messaging) ---
   // -------------------------------------------------------------
   getGroupMessages: async (groupId) => {
+    let groupClearedAt = null;
+    const group = await db.getGroupById(groupId);
+    if (group && group.clearedAt) {
+      groupClearedAt = new Date(group.clearedAt).getTime();
+    }
+
     if (isMongoConnected) {
       try {
-        return await TeamMessageModel.find({ type: 'group', groupId }).sort({ createdAt: 1 }).lean();
+        const query = { type: 'group', groupId };
+        if (group?.clearedAt) {
+          query.createdAt = { $gt: group.clearedAt };
+        }
+        return await TeamMessageModel.find(query).sort({ createdAt: 1 }).lean();
       } catch (err) {
         console.error('Mongo getGroupMessages error:', err.message);
       }
     }
     const local = readJson(DB_MESSAGES_FILE, SEED_TEAM_MESSAGES);
     return local
-      .filter((m) => m.type === 'group' && m.groupId === groupId)
+      .filter((m) => {
+        if (m.type !== 'group' || m.groupId !== groupId) return false;
+        if (groupClearedAt && new Date(m.createdAt).getTime() <= groupClearedAt) return false;
+        return true;
+      })
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   },
 
   getDirectMessages: async (user1Id, user2Id) => {
+    let user1ClearedAt = null;
+    const user1 = await db.findUserById(user1Id);
+    if (user1 && user1.clearedDirectChats && user1.clearedDirectChats[user2Id]) {
+      user1ClearedAt = new Date(user1.clearedDirectChats[user2Id]).getTime();
+    }
+
     if (isMongoConnected) {
       try {
-        return await TeamMessageModel.find({
+        const query = {
           type: 'direct',
           $or: [
             { senderId: user1Id, recipientId: user2Id },
             { senderId: user2Id, recipientId: user1Id },
           ],
-        })
-          .sort({ createdAt: 1 })
-          .lean();
+        };
+        if (user1?.clearedDirectChats?.[user2Id]) {
+          query.createdAt = { $gt: user1.clearedDirectChats[user2Id] };
+        }
+        return await TeamMessageModel.find(query).sort({ createdAt: 1 }).lean();
       } catch (err) {
         console.error('Mongo getDirectMessages error:', err.message);
       }
     }
     const local = readJson(DB_MESSAGES_FILE, SEED_TEAM_MESSAGES);
     return local
-      .filter(
-        (m) =>
-          m.type === 'direct' &&
-          ((m.senderId === user1Id && m.recipientId === user2Id) ||
-            (m.senderId === user2Id && m.recipientId === user1Id))
-      )
+      .filter((m) => {
+        if (m.type !== 'direct') return false;
+        const matchesPair =
+          (m.senderId === user1Id && m.recipientId === user2Id) ||
+          (m.senderId === user2Id && m.recipientId === user1Id);
+        if (!matchesPair) return false;
+        if (user1ClearedAt && new Date(m.createdAt).getTime() <= user1ClearedAt) return false;
+        return true;
+      })
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   },
 
@@ -1382,13 +1409,26 @@ export const db = {
   },
 
   clearGroupMessages: async (groupId) => {
+    const clearedTimestamp = new Date().toISOString();
     if (isMongoConnected) {
       try {
-        await TeamMessageModel.deleteMany({ type: 'group', groupId });
+        await Promise.all([
+          TeamMessageModel.deleteMany({ type: 'group', groupId }),
+          GroupModel.updateOne({ id: groupId }, { $set: { clearedAt: clearedTimestamp } }),
+        ]);
       } catch (err) {
         console.error('Mongo clearGroupMessages error:', err.message);
       }
     }
+
+    // Update group's clearedAt timestamp in local storage
+    const allGroups = readJson(DB_GROUPS_FILE, SEED_GROUPS);
+    const grpIdx = allGroups.findIndex((g) => g.id === groupId);
+    if (grpIdx !== -1) {
+      allGroups[grpIdx].clearedAt = clearedTimestamp;
+      writeJson(DB_GROUPS_FILE, allGroups);
+    }
+
     const local = readJson(DB_MESSAGES_FILE, SEED_TEAM_MESSAGES);
     const filtered = local.filter((m) => !(m.type === 'group' && m.groupId === groupId));
     writeJson(DB_MESSAGES_FILE, filtered);
@@ -1396,19 +1436,36 @@ export const db = {
   },
 
   clearDirectMessages: async (user1Id, user2Id) => {
+    const clearedTimestamp = new Date().toISOString();
     if (isMongoConnected) {
       try {
-        await TeamMessageModel.deleteMany({
-          type: 'direct',
-          $or: [
-            { senderId: user1Id, recipientId: user2Id },
-            { senderId: user2Id, recipientId: user1Id },
-          ],
-        });
+        await Promise.all([
+          TeamMessageModel.deleteMany({
+            type: 'direct',
+            $or: [
+              { senderId: user1Id, recipientId: user2Id },
+              { senderId: user2Id, recipientId: user1Id },
+            ],
+          }),
+          UserModel.updateOne(
+            { id: user1Id },
+            { $set: { [`clearedDirectChats.${user2Id}`]: clearedTimestamp } }
+          ),
+        ]);
       } catch (err) {
         console.error('Mongo clearDirectMessages error:', err.message);
       }
     }
+
+    // Update user's clearedDirectChats in local storage
+    const allUsers = readJson(DB_USERS_FILE, SEED_USERS);
+    const userIdx = allUsers.findIndex((u) => u.id === user1Id);
+    if (userIdx !== -1) {
+      allUsers[userIdx].clearedDirectChats = allUsers[userIdx].clearedDirectChats || {};
+      allUsers[userIdx].clearedDirectChats[user2Id] = clearedTimestamp;
+      writeJson(DB_USERS_FILE, allUsers);
+    }
+
     const local = readJson(DB_MESSAGES_FILE, SEED_TEAM_MESSAGES);
     const filtered = local.filter(
       (m) =>
